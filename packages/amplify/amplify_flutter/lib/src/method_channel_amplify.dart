@@ -53,6 +53,8 @@ class MethodChannelAmplify extends AmplifyClass {
         Hub.addChannel(HubChannel.DataStore, plugin.streamController);
       } else if (plugin is APIPluginInterface) {
         await API.addPlugin(plugin);
+      } else if (plugin is NotificationsPluginInterface) {
+        await Notifications.addPlugin(plugin);
       } else {
         throw AmplifyException(
           'The type of plugin ${plugin.runtimeType} is not yet supported '
@@ -114,5 +116,6 @@ class MethodChannelAmplify extends AmplifyClass {
     Storage.plugins.clear();
     DataStore.plugins.clear();
     API.plugins.clear();
+    Notifications.plugins.clear();
   }
 }
