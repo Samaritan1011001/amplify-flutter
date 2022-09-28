@@ -23,21 +23,65 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
   @nonVirtual
   Category get category => Category.notifications;
 
+  Future<void> onConfigure() async {}
+
+  /// Configuration APIs
   Future<void> registerForRemoteNotifications() {
     throw UnimplementedError(
         'registerForRemoteNotifications() has not been implemented');
   }
 
-  Future<void> promptUserPermission() {
-    throw UnimplementedError('promptUserPermission() has not been implemented');
+  Future<PushNotificationSettings> requestMessagingPermission({PushNotificationSettings? permissionOptions}) {
+    throw UnimplementedError('requestMessagingPermission() has not been implemented');
   }
 
-   Future<Stream<String>> onNewToken() {
+  Future<void> identifyUser({
+    required String userId,
+    required AnalyticsUserProfile userProfile,
+  }) {
+    throw UnimplementedError('identifyUser() has not been implemented');
+  }
+
+  /// Token Managment APIs
+  Future<Stream<String>> onNewToken() {
     throw UnimplementedError(
       'onNewToken() has not been implemented',
     );
   }
 
+  Future<String> getToken() {
+    throw UnimplementedError('getToken() has not been implemented');
+  }
 
-  Future<void> onConfigure() async {}
+  /// Notification Hadling APIs
+  Future<Stream<RemoteMessage>> onForegroundNotificationReceived() {
+    throw UnimplementedError(
+      'onForegroundNotificationReceived() has not been implemented',
+    );
+  }
+
+  Future<Stream<RemoteMessage>> onBackgroundNotificationReceived() {
+    throw UnimplementedError(
+      'onBackgroundNotificationReceived() has not been implemented',
+    );
+  }
+
+  Future<Stream<RemoteMessage>> onNotificationOpenedApp() {
+    throw UnimplementedError(
+      'onNotificationOpenedApp() has not been implemented',
+    );
+  }
+
+  Future<RemoteMessage> getInitialNotification() {
+    throw UnimplementedError('getInitialNotification() has not been implemented');
+  }
+
+  Future<int> getBadgeCount() {
+    throw UnimplementedError('getBadgeCount() has not been implemented');
+  }
+
+  Future<void> setBadgeCount() {
+    throw UnimplementedError('setBadgeCount() has not been implemented');
+  }
+
 }

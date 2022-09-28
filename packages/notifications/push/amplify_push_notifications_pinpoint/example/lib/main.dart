@@ -54,6 +54,30 @@ class _MyAppState extends State<MyApp> {
         body: Center(
           child: Column(
             children: [
+              const Text('Configuration APIs'),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await Amplify.Notifications.requestMessagingPermission();
+                  } catch (e) {
+                    print(e.toString());
+                  }
+                },
+                child: const Text('Request for permission'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await Amplify.Notifications.identifyUser(
+                        userId: 'test-1',
+                        userProfile: AnalyticsUserProfile(name: 'test'));
+                  } catch (e) {
+                    print(e.toString());
+                  }
+                },
+                child: const Text('Identify User'),
+              ),
+              const Text('Configuration APIs'),
               TextButton(
                 onPressed: () async {
                   try {
@@ -62,17 +86,7 @@ class _MyAppState extends State<MyApp> {
                     print(e.toString());
                   }
                 },
-                child: Text('Get token'),
-              ),
-               TextButton(
-                onPressed: () async {
-                  try {
-                    await Amplify.Notifications.registerForRemoteNotifications();
-                  } catch (e) {
-                    print(e.toString());
-                  }
-                },
-                child: Text('Register for notifiation'),
+                child: const Text('Get Token'),
               ),
             ],
           ),

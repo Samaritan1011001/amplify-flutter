@@ -36,6 +36,9 @@ export 'src/types/config/amplify_config.dart' hide UnknownPluginConfigFactory;
 /// Datastore
 export 'src/types/datastore/datastore_types.dart' hide DateTimeParse;
 
+/// Notifications
+export 'src/types/notifications/notification_types.dart';
+
 /// Exceptions
 export 'src/types/exception/amplify_already_configured_exception.dart';
 export 'src/types/exception/amplify_exception.dart';

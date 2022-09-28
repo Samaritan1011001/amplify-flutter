@@ -15,11 +15,11 @@
 
 part of amplify_interface;
 
-class NotificationsCategory extends AmplifyCategory<NotificationsPluginInterface> {
+class NotificationsCategory
+    extends AmplifyCategory<NotificationsPluginInterface> {
   @override
   @nonVirtual
   Category get category => Category.notifications;
-
 
   Future<void> registerForRemoteNotifications() {
     return plugins.length == 1
@@ -27,17 +27,66 @@ class NotificationsCategory extends AmplifyCategory<NotificationsPluginInterface
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Future<void> promptUserPermission() {
+  Future<PushNotificationSettings> requestMessagingPermission({PushNotificationSettings? permissionOptions}) {
     return plugins.length == 1
-        ? plugins[0].promptUserPermission()
+        ? plugins[0].requestMessagingPermission(permissionOptions: permissionOptions)
         : throw _pluginNotAddedException('Notifications');
   }
 
-   Future<Stream<String>> onNewToken() {
+  Future<void> identifyUser(
+      {required String userId,
+      required AnalyticsUserProfile userProfile}) async {
+    return plugins.length == 1
+        ? plugins[0].identifyUser(userId: userId, userProfile: userProfile)
+        : throw _pluginNotAddedException('Analytics');
+  }
+
+  Future<Stream<String>> onNewToken() {
     return plugins.length == 1
         ? plugins[0].onNewToken()
         : throw _pluginNotAddedException('Notifications');
   }
 
+  Future<String> getToken() {
+    return plugins.length == 1
+        ? plugins[0].getToken()
+        : throw _pluginNotAddedException('Notifications');
+  }
 
+  Future<Stream<RemoteMessage>> onForegroundNotificationReceived() {
+    return plugins.length == 1
+        ? plugins[0].onForegroundNotificationReceived()
+        : throw _pluginNotAddedException('Notifications');
+  }
+
+  Future<Stream<RemoteMessage>> onBackgroundNotificationReceived() {
+    return plugins.length == 1
+        ? plugins[0].onBackgroundNotificationReceived()
+        : throw _pluginNotAddedException('Notifications');
+  }
+
+  Future<Stream<RemoteMessage>> onNotificationOpenedApp() {
+    return plugins.length == 1
+        ? plugins[0].onNotificationOpenedApp()
+        : throw _pluginNotAddedException('Notifications');
+  }
+
+  Future<RemoteMessage> getInitialNotification() {
+    return plugins.length == 1
+        ? plugins[0].getInitialNotification()
+        : throw _pluginNotAddedException('Notifications');
+  }
+
+  Future<int> getBadgeCount() {
+    return plugins.length == 1
+        ? plugins[0].getBadgeCount()
+        : throw _pluginNotAddedException('Notifications');
+  }
+  
+  Future<void> setBadgeCount() {
+    return plugins.length == 1
+        ? plugins[0].setBadgeCount()
+        : throw _pluginNotAddedException('Notifications');
+  }
+  
 }

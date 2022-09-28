@@ -1,1 +1,3 @@
 rootProject.name = 'amplify_push_notifications_pinpoint_android'
+include ':amplify_core'
+project(':amplify_core').projectDir = new File(settingsDir, '../../../../../amplify_core')

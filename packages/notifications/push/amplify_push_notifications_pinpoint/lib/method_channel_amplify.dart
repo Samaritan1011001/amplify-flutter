@@ -18,15 +18,28 @@ import 'package:flutter/services.dart';
 
 import '../amplify_push_notifications_pinpoint.dart';
 
-const MethodChannel _channel =
-    MethodChannel('com.amazonaws.amplify/analytics_pinpoint');
+const MethodChannel _methodChannel = MethodChannel(
+    'com.amazonaws.amplify/notifications_pinpoint');
 
-class AmplifyNotificationsPinpointMethodChannel extends AmplifyPushNotificaitonsPinpoint {
+const EventChannel _eventChannel =
+    EventChannel('com.amazonaws.amplify/event_channel/notifications_pinpoint');
+
+class AmplifyNotificationsPinpointMethodChannel
+    extends AmplifyPushNotificaitonsPinpoint {
   AmplifyNotificationsPinpointMethodChannel() : super.protected();
+
+  static Stream<String>? _newTokenStream;
+
+  // TODO: map using the push token from the event not the entire event
+  static Stream<String> get newTokenStream => _newTokenStream ??=
+      _eventChannel.receiveBroadcastStream().map((event) => event.toString());
+
   @override
   Future<void> addPlugin() async {
     try {
-      return await _channel.invokeMethod('addPlugin');
+      // TODO: Add the call to native layer to add the plugin
+      return Future.delayed(const Duration(milliseconds: 10));
+      // return await _methodChannel.invokeMethod('addPlugin');
     } on PlatformException catch (e) {
       if (e.code == 'AmplifyAlreadyConfiguredException') {
         throw const AmplifyAlreadyConfiguredException(
@@ -42,19 +55,70 @@ class AmplifyNotificationsPinpointMethodChannel extends AmplifyPushNotificaitons
 
   @override
   Future<void> registerForRemoteNotifications() async {
-    await _channel.invokeMethod<bool>(
-      'registerForRemoteNotifications'
-    );
+    await _methodChannel.invokeMethod<bool>('registerForRemoteNotifications');
   }
 
   @override
-  Future<void> promptUserPermission() async {
-    await _channel.invokeMethod<bool>('promptUserPermission');
+  Future<PushNotificationSettings> requestMessagingPermission(
+      {PushNotificationSettings? permissionOptions}) async {
+    permissionOptions ??= PushNotificationSettings();
+
+    await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
+
+    permissionOptions.authorizationStatus = AuthorizationStatus.authorized;
+    print("permissionOptions -> ${permissionOptions.authorizationStatus}");
+    return permissionOptions;
   }
 
-  // @override
-  // Future<Stream<String>> onNewToken() async {
-  //   return await _channel.invokeMethod<bool>('promptUserPermission');
-  // }
+  @override
+  Future<void> identifyUser({
+    required String userId,
+    required AnalyticsUserProfile userProfile,
+  }) async {
+    print("userId -> $userId");
+    print("userProfile -> $userProfile");
 
+    // await _methodChannel.invokeMethod<bool>('identifyUser');
+  }
+
+  @override
+  Future<Stream<String>> onNewToken() async {
+    // return await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
+    return newTokenStream;
+  }
+
+  @override
+  Future<String> getToken() async {
+    print("Token ->");
+    // await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
+    return '';
+  }
+
+  @override
+  Future<Stream<RemoteMessage>> onForegroundNotificationReceived() async {
+    return Stream.empty();
+  }
+
+  @override
+  Future<Stream<RemoteMessage>> onBackgroundNotificationReceived() async {
+    return Stream.empty();
+  }
+
+  @override
+  Future<Stream<RemoteMessage>> onNotificationOpenedApp() async {
+    return Stream.empty();
+  }
+
+  @override
+  Future<RemoteMessage> getInitialNotification() async {
+    return RemoteMessage();
+  }
+
+  @override
+  Future<int> getBadgeCount() async {
+    return 0;
+  }
+
+  @override
+  Future<void> setBadgeCount() async {}
 }
