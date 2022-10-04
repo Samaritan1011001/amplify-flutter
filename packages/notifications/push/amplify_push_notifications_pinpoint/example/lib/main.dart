@@ -68,14 +68,22 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    await Amplify.Notifications.identifyUser(
-                        userId: 'test-1',
-                        userProfile: AnalyticsUserProfile(name: 'test'));
+                    await Amplify.Notifications.onNewToken();
                   } catch (e) {
                     print(e.toString());
                   }
                 },
-                child: const Text('Identify User'),
+                child: const Text('onNewToken'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await Amplify.Notifications.getToken();
+                  } catch (e) {
+                    print(e.toString());
+                  }
+                },
+                child: const Text('getToken'),
               ),
               const Text('Configuration APIs'),
               TextButton(

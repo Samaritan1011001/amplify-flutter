@@ -37,6 +37,8 @@ class AmplifyNotificationsPinpointMethodChannel
   @override
   Future<void> addPlugin() async {
     try {
+      _methodChannel.setMethodCallHandler(nativeMethodCallHandler);
+
       // TODO: Add the call to native layer to add the plugin
       return Future.delayed(const Duration(milliseconds: 10));
       // return await _methodChannel.invokeMethod('addPlugin');
@@ -50,6 +52,18 @@ class AmplifyNotificationsPinpointMethodChannel
       } else {
         throw AmplifyException.fromMap((e.details as Map).cast());
       }
+    }
+  }
+
+  Future<dynamic> nativeMethodCallHandler(MethodCall methodCall) async {
+    print('Native call!');
+    switch (methodCall.method) {
+      case "getToken" :
+        print("Received device token");
+        break;
+      default:
+        return "Nothing";
+        break;
     }
   }
 
@@ -83,14 +97,14 @@ class AmplifyNotificationsPinpointMethodChannel
 
   @override
   Future<Stream<String>> onNewToken() async {
-    // return await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
+    await _methodChannel.invokeMethod('onNewToken');
     return newTokenStream;
   }
 
   @override
   Future<String> getToken() async {
     print("Token ->");
-    // await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
+    await _methodChannel.invokeMethod<bool>('getToken');
     return '';
   }
 
