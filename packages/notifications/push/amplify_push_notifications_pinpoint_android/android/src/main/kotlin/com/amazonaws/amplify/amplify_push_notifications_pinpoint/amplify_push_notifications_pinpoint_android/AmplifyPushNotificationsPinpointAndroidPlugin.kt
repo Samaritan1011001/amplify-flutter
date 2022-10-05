@@ -18,13 +18,14 @@
 
 package com.amazonaws.amplify.amplify_push_notifications_pinpoint.amplify_push_notifications_pinpoint_android
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.NonNull
 import com.amazonaws.amplify.amplify_core.AtomicResult
 import com.amplifyframework.core.Amplify
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -65,6 +66,25 @@ public class AmplifyPushNotificationsPinpointAndroidPlugin : FlutterPlugin, Acti
 
 //        askNotificationPermission()
         result.success(null)
+      }
+      "getToken" -> {
+        LOG.info("getting token ")
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+          if (!task.isSuccessful) {
+            LOG.info( "Fetching FCM registration token failed")
+            return@OnCompleteListener
+          }
+
+          // Get new FCM registration token
+          val token = task.result
+          result.success(token)
+
+        })
+      }
+      "onNewToken" -> {
+        LOG.info("onNewToken native method ")
+        val serviceIntent = Intent(context,MyFirebaseMessagingService::class.java)
+        context.startService(serviceIntent)
       }
       else -> result.notImplemented()
     }

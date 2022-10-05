@@ -103,8 +103,9 @@ class AmplifyNotificationsPinpointMethodChannel
 
   @override
   Future<String> getToken() async {
-    print("Token ->");
-    await _methodChannel.invokeMethod<bool>('getToken');
+    String? token = await _methodChannel.invokeMethod<String>('getToken');
+        print("Token -> $token");
+
     return '';
   }
 
