@@ -1,8 +1,14 @@
 import Flutter
 import UIKit
 import amplify_core
+import Foundation
 
-
+extension Data {
+    var hexString: String {
+        let hexString = map { String(format: "%02.2hhx", $0) }.joined()
+        return hexString
+    }
+}
 public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPlugin {
 
     let channel:FlutterMethodChannel?;
@@ -63,8 +69,9 @@ public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPl
     public func application(_ application: UIApplication,
                 didRegisterForRemoteNotificationsWithDeviceToken
                     deviceToken: Data) {
-        print("deviceToken : \(deviceToken)")
-        self.channel?.invokeMethod("getToken",arguments: deviceToken);
+        let deviceTokenString = deviceToken.hexString
+        print("deviceToken : \(deviceTokenString)")
+        self.channel?.invokeMethod("getToken",arguments: deviceTokenString);
 //       self.sendDeviceTokenToServer(data: deviceToken)
     }
 
@@ -72,6 +79,16 @@ public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPl
                 didFailToRegisterForRemoteNotificationsWithError
                     error: Error) {
         print("error getting token : \(error)")
+    }
+    
+    public func userNotificationCenter(_ center: UNUserNotificationCenter,
+                didReceive response: UNNotificationResponse,
+                withCompletionHandler completionHandler:
+                   @escaping () -> Void) {
+        
+        print("received notificaiton : \(response)")
+
+    completionHandler()
     }
     
     

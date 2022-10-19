@@ -15,6 +15,9 @@ dependencies:
   flutter:
     sdk: flutter
   meta: ^1.7.0
+  aws_signature_v4: ^0.1.0
+  smithy: ^0.1.0
+  smithy_aws: ^0.1.0
 
 dev_dependencies:
   amplify_lints: ^1.0.0

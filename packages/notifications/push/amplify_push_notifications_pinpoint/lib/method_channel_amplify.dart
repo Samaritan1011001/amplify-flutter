@@ -17,6 +17,7 @@ import 'package:amplify_core/amplify_core.dart';
 import 'package:flutter/services.dart';
 
 import '../amplify_push_notifications_pinpoint.dart';
+// import 'package:amplify_push_notifications_pinpoint/lib/sdk/pinpoint.dart';
 
 const MethodChannel _methodChannel = MethodChannel(
     'com.amazonaws.amplify/notifications_pinpoint');
@@ -136,4 +137,21 @@ class AmplifyNotificationsPinpointMethodChannel
 
   @override
   Future<void> setBadgeCount() async {}
+
+  //   /// Create an EndpointRequest object from a local Endpoint instance
+  // EndpointRequest _endpointToRequest(PublicEndpoint publicEndpoint) {
+  //   return EndpointRequest(
+  //     address: publicEndpoint.address,
+  //     attributes: publicEndpoint.attributes,
+  //     channelType: publicEndpoint.channelType,
+  //     demographic: publicEndpoint.demographic,
+  //     effectiveDate: publicEndpoint.effectiveDate,
+  //     endpointStatus: publicEndpoint.endpointStatus,
+  //     location: publicEndpoint.location,
+  //     metrics: publicEndpoint.metrics,
+  //     optOut: publicEndpoint.optOut,
+  //     requestId: publicEndpoint.requestId,
+  //     user: publicEndpoint.user,
+  //   );
+  // }
 }
