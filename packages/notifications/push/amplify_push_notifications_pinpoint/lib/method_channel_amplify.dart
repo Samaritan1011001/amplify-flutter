@@ -13,6 +13,8 @@
  * permissions and limitations under the License.
  */
 
+import 'dart:async';
+
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_push_notifications_pinpoint/endpoint_client.dart';
 import 'package:amplify_push_notifications_pinpoint/src/impl/device_info_context_provider.dart';
@@ -40,6 +42,10 @@ class AmplifyNotificationsPinpointMethodChannel
       AmplifyLogger.category(Category.notifications)
           .createChild('AmplifyNotificationsPinpointMethodChannel');
 
+    final StreamController<RemotePushMessage> _foregroundEventStreamController = StreamController<RemotePushMessage>();
+        final StreamController<RemotePushMessage> _backgroundEventStreamController = StreamController<RemotePushMessage>();
+
+
   // TODO: map using the push token from the event not the entire event
   static Stream<String> get newTokenStream => _newTokenStream ??=
       _eventChannel.receiveBroadcastStream().map((event) => event.toString());
@@ -47,145 +53,109 @@ class AmplifyNotificationsPinpointMethodChannel
   Future<dynamic> nativeMethodCallHandler(MethodCall methodCall) async {
     print('Native call!');
     switch (methodCall.method) {
-      case "getToken":
-        print("Received device token");
+      case "onForegroundNotificationReceived":
+        print("onForegroundNotificationReceived");
+        _foregroundEventStreamController.add(RemotePushMessage());
+        break;
+      case "onBackgroundNotificationReceived":
+        print("onBackgroundNotificationReceived");
+        _backgroundEventStreamController.add(RemotePushMessage());
         break;
       default:
         return "Nothing";
     }
   }
 
-  @override
-  Future<void> addPlugin({
-    required AmplifyAuthProviderRepository authProviderRepo,
-  }) async {
-    _logger.info("addPlugin works!");
-
-    try {
-      await super.addPlugin(authProviderRepo: authProviderRepo);
-
-      await configureCustom(authProviderRepo);
-      _methodChannel.setMethodCallHandler(nativeMethodCallHandler);
-
-      // TODO: Add the call to native layer to add the plugin
-      return Future.delayed(const Duration(milliseconds: 10));
-      // return await _methodChannel.invokeMethod('addPlugin');
-    } on PlatformException catch (e) {
-      if (e.code == 'AmplifyAlreadyConfiguredException') {
-        throw const AmplifyAlreadyConfiguredException(
-          AmplifyExceptionMessages.alreadyConfiguredDefaultMessage,
-          recoverySuggestion:
-              AmplifyExceptionMessages.missingRecoverySuggestion,
-        );
-      } else {
-        throw AmplifyException.fromMap((e.details as Map).cast());
-      }
-    }
-  }
-
-  Future<void> configureCustom(
-      AmplifyAuthProviderRepository authProviderRepo) async {
-    try {
-      _logger.info("configureCustom works!");
-
-      const appId = '3ff4b3c988e548d2ac5dc50fe907cc29';
-      const region = 'us-east-1';
-
-      // Prepare PinpointClient
-      final authProvider = authProviderRepo
-          .getAuthProvider(APIAuthorizationType.iam.authProviderToken);
-
-      if (authProvider == null) {
-        throw const AnalyticsException(
-          'No AWSIamAmplifyAuthProvider available. Is Auth category added and configured?',
-        );
-      }
-      final pinpointClient = PinpointClient(
-        region: region,
-        credentialsProvider: authProvider,
-      );
-
-      // Prepare AnalyticsClient
-      final keyValueStore = AmplifySecureStorage(
-        config: AmplifySecureStorageConfig(
-          scope: 'analyticsPinpoint',
-        ),
-      );
-
-      String deviceToken = await getToken();
-      __endpointClient = await EndpointClient.getInstance(
-          appId, keyValueStore, pinpointClient, deviceToken);
-      await __endpointClient?.updateEndpoint();
-    } catch (e) {
-      _logger.error("Error in configure -> $e");
-    }
-  }
-
-  @override
-  Future<void> onConfigure() async {
-    try {
-      _logger.info("onConfigure works!");
-    } on Exception {
-      // TODO: log, but should not happen
-    }
-  }
-
   // @override
-  // Future<void> configure({
-  //   AmplifyConfig? config,
+  // Future<void> addPlugin({
   //   required AmplifyAuthProviderRepository authProviderRepo,
   // }) async {
-  //   // Register native listeners for token generattion and notification handling
-  //   // Initialize Pinpoint and Endpoint Clients
-  //   // Register FCM and APNS if auto-registeration is enabled
-  //   // Create an Endpoint with a unique endpointId
+  //   await super.addPlugin(authProviderRepo: authProviderRepo);
+  //   _logger.info("authProviderRepo -> $authProviderRepo");
 
-  //   _logger.info("Configure works!");
-  //   // // Parse config values from amplifyconfiguration.json
-  //   // if (config == null ||
-  //   //     config.analytics == null ||
-  //   //     config.analytics?.awsPlugin == null) {
-  //   //   throw const AnalyticsException('No Pinpoint plugin config available');
-  //   // }
+  //   _logger.info("addPlugin works!");
 
-  //   // final pinpointConfig = config.analytics!.awsPlugin!;
-  //   // final appId = pinpointConfig.pinpointAnalytics.appId;
-  //   // final region = pinpointConfig.pinpointAnalytics.region;
+  //   try {
+  //     // await configureCustom(authProviderRepo);
+  //     _methodChannel.setMethodCallHandler(nativeMethodCallHandler);
 
-  //   // // Prepare PinpointClient
-  //   // final authProvider = authProviderRepo
-  //   //     .getAuthProvider(APIAuthorizationType.iam.authProviderToken);
-
-  //   // if (authProvider == null) {
-  //   //   throw const AnalyticsException(
-  //   //     'No AWSIamAmplifyAuthProvider available. Is Auth category added and configured?',
-  //   //   );
-  //   // }
-
-  //   // final pinpointClient = PinpointClient(
-  //   //   region: region,
-  //   //   credentialsProvider: authProvider,
-  //   // );
-
-  //   // // Prepare AnalyticsClient
-  //   // final keyValueStore =
-  //   //     AmplifySecureStorageWorker(
-  //   //       config: AmplifySecureStorageConfig(
-  //   //         scope: 'analyticsPinpoint',
-  //   //       ),
-  //   //     );
-
-  //   // // final deviceContextInfo =
-  //   // //     await _deviceContextInfoProvider?.getDeviceInfoDetails();
-  //   // String deviceToken = await getToken();
-  //   // __endpointClient = await EndpointClient.getInstance(appId, keyValueStore, pinpointClient, deviceToken);
-
+  //     // TODO: Add the call to native layer to add the plugin
+  //     // return Future.delayed(const Duration(milliseconds: 10));
+  //     return await _methodChannel.invokeMethod('addPlugin');
+  //   } on PlatformException catch (e) {
+  //     if (e.code == 'AmplifyAlreadyConfiguredException') {
+  //       throw const AmplifyAlreadyConfiguredException(
+  //         AmplifyExceptionMessages.alreadyConfiguredDefaultMessage,
+  //         recoverySuggestion:
+  //             AmplifyExceptionMessages.missingRecoverySuggestion,
+  //       );
+  //     } else {
+  //       throw AmplifyException.fromMap((e.details as Map).cast());
+  //     }
+  //   }
   // }
 
   @override
-  Future<void> registerForRemoteNotifications() async {
+  Future<void> configure({
+    AmplifyConfig? config,
+    required AmplifyAuthProviderRepository authProviderRepo,
+  }) async {
+    // Register native listeners for token generation and notification handling
+    _methodChannel.setMethodCallHandler(nativeMethodCallHandler);
+
+    _logger.info("Configure works!");
+
+    // Parse config values from amplifyconfiguration.json
+    if (config == null ||
+        config.analytics == null ||
+        config.analytics?.awsPlugin == null) {
+      throw const AnalyticsException('No Pinpoint plugin config available');
+    }
+
+    final pinpointConfig = config.analytics!.awsPlugin!;
+    final appId = pinpointConfig.pinpointAnalytics.appId;
+    final region = pinpointConfig.pinpointAnalytics.region;
+
+    final authProvider = authProviderRepo
+        .getAuthProvider(APIAuthorizationType.iam.authProviderToken);
+    if (authProvider == null) {
+      throw const AnalyticsException(
+        'No AWSIamAmplifyAuthProvider available. Is Auth category added and configured?',
+      );
+    }
+
+    // Initialize Pinpoint Client
+    final pinpointClient = PinpointClient(
+      region: region,
+      credentialsProvider: authProvider,
+    );
+    final keyValueStore = AmplifySecureStorage(
+      config: AmplifySecureStorageConfig(
+        scope: 'analyticsPinpoint',
+      ),
+    );
+
+    // Register FCM and APNS if auto-registeration is enabled
+    await _registerForRemoteNotifications();
+
+
+    // Get device token once
+    String deviceToken = await getToken();
+
+    // Initialize Endpoint Client
+    __endpointClient = await EndpointClient.getInstance(
+      appId,
+      keyValueStore,
+      pinpointClient,
+      deviceToken,
+    );
+
+    await __endpointClient?.updateEndpoint();
+  }
+
+  Future<void> _registerForRemoteNotifications() async {
     _logger.info("registerForRemoteNotifications");
-    // await _methodChannel.invokeMethod<bool>('registerForRemoteNotifications');
+    await _methodChannel.invokeMethod<String>('registerForRemoteNotifications');
   }
 
   @override
@@ -193,11 +163,13 @@ class AmplifyNotificationsPinpointMethodChannel
       {PushNotificationSettings? pushNotificationSettings}) async {
     pushNotificationSettings ??= PushNotificationSettings();
 
-    await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
+    bool? granted = await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
 
+    if(granted!=null){
     pushNotificationSettings.authorizationStatus =
-        AuthorizationStatus.authorized;
-    print(
+        granted?AuthorizationStatus.authorized:AuthorizationStatus.denied;
+    }
+     _logger.info(
         "pushNotificationSettings -> ${pushNotificationSettings.authorizationStatus}");
     return pushNotificationSettings;
   }
@@ -228,14 +200,11 @@ class AmplifyNotificationsPinpointMethodChannel
   }
 
   @override
-  Future<Stream<RemotePushMessage>> onForegroundNotificationReceived() async {
-    return Stream.empty();
-  }
+  Future<Stream<RemotePushMessage>> onForegroundNotificationReceived() async => _foregroundEventStreamController.stream;
+  
 
   @override
-  Future<Stream<RemotePushMessage>> onBackgroundNotificationReceived() async {
-    return Stream.empty();
-  }
+  Future<Stream<RemotePushMessage>> onBackgroundNotificationReceived() async => _backgroundEventStreamController.stream;
 
   @override
   Future<Stream<RemotePushMessage>> onNotificationOpenedApp() async {

@@ -16,7 +16,7 @@
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_push_notifications_pinpoint/endpoint_global_fields_manager.dart';
 import 'package:amplify_push_notifications_pinpoint/src/sdk/pinpoint.dart';
-import 'package:amplify_secure_storage_dart/amplify_secure_storage_dart.dart';
+import 'package:amplify_secure_storage/amplify_secure_storage.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 import 'package:uuid/uuid.dart';
@@ -62,7 +62,7 @@ class EndpointClient {
       );
     }
 
-    _logger.info("EndpointId -> $savedFixedEndpointId");
+    _logger.info("savedFixedEndpointId -> $savedFixedEndpointId");
 
     final globalFieldsManager =
         await EndpointGlobalFieldsManager.getInstance(keyValueStore);
@@ -211,9 +211,11 @@ class EndpointClient {
   Future<void> updateEndpoint() async {
     try {
       _logger.info(" IN Update endpoint result ");
-      final endpointReq = _endpointToRequest(getPublicEndpoint());
-      _logger.info("endpointReq -> $endpointReq");
       _logger.info("_pinpointClient -> $_pinpointClient}");
+      final endpointReq = _endpointToRequest(getPublicEndpoint());
+      _logger.info("_appId -> $_appId");
+      _logger.info("_fixedEndpointId -> $_fixedEndpointId");
+      _logger.info("endpointReq -> $endpointReq");
 
       final res = await _pinpointClient
           .updateEndpoint(

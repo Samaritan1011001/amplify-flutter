@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'amplifyconfiguration.dart';
 
 void main() {
+  AmplifyLogger().logLevel = LogLevel.info;
   runApp(const MyApp());
 }
 
@@ -55,7 +56,7 @@ class _MyAppState extends State<MyApp> {
     AmplifyAnalyticsPinpoint analyticsPlugin = AmplifyAnalyticsPinpoint();
     AmplifyAuthCognito authPlugin = AmplifyAuthCognito();
 
-    Amplify.addPlugins([authPlugin, analyticsPlugin]);
+    await Amplify.addPlugins([authPlugin, analyticsPlugin]);
 
     try {
       await Amplify.configure(amplifyconfig);

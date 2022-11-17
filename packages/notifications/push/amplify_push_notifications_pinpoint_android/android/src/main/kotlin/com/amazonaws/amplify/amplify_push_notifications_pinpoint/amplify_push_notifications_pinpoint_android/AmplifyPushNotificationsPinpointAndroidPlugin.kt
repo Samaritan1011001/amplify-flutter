@@ -19,6 +19,7 @@
 package com.amazonaws.amplify.amplify_push_notifications_pinpoint.amplify_push_notifications_pinpoint_android
 
 import android.app.Activity
+import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -26,6 +27,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.annotation.NonNull
 import com.amazonaws.amplify.AtomicResult
+import com.amplifyframework.analytics.pinpoint.AWSPinpointAnalyticsPlugin
 import com.amplifyframework.core.Amplify
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
@@ -45,50 +47,50 @@ public class AmplifyPushNotificationsPinpointAndroidPlugin : FlutterPlugin, Acti
   private lateinit var context: Context
   private val LOG = Amplify.Logging.forNamespace("amplify:flutter:notifications_pinpoint")
 
-  // To invoke the bound service, first make sure that this value
-  // is not null.
-  private var mBoundService: MyFirebaseMessagingService? = null
+//  // To invoke the bound service, first make sure that this value
+//  // is not null.
+//  private var mBoundService: MyFirebaseMessagingService? = null
+//
+//  private val mConnection: ServiceConnection = object : ServiceConnection {
+//    override fun onServiceConnected(className: ComponentName?, service: IBinder) {
+//      // This is called when the connection with the service has been
+//      // established, giving us the service object we can use to
+//      // interact with the service.  Because we have bound to a explicit
+//      // service that we know is running in our own process, we can
+//      // cast its IBinder to a concrete class and directly access it.
+////      mBoundService = service.javaClass
+//      LOG.info("Connected to service")
+//
+//      // Tell the user about this for our demo.
+//
+//    }
+//
+//    override fun onServiceDisconnected(className: ComponentName?) {
+//      // This is called when the connection with the service has been
+//      // unexpectedly disconnected -- that is, its process crashed.
+//      // Because it is running in our same process, we should never
+//      // see this happen.
+//      mBoundService = null
+//
+//    }
+//  }
 
-  private val mConnection: ServiceConnection = object : ServiceConnection {
-    override fun onServiceConnected(className: ComponentName?, service: IBinder) {
-      // This is called when the connection with the service has been
-      // established, giving us the service object we can use to
-      // interact with the service.  Because we have bound to a explicit
-      // service that we know is running in our own process, we can
-      // cast its IBinder to a concrete class and directly access it.
-//      mBoundService = service.javaClass
-      LOG.info("Connected to service")
-
-      // Tell the user about this for our demo.
-
-    }
-
-    override fun onServiceDisconnected(className: ComponentName?) {
-      // This is called when the connection with the service has been
-      // unexpectedly disconnected -- that is, its process crashed.
-      // Because it is running in our same process, we should never
-      // see this happen.
-      mBoundService = null
-
-    }
-  }
-
-  private fun doBindService(context:Context) {
-    // Attempts to establish a connection with the service.  We use an
-    // explicit class name because we want a specific service
-    // implementation that we know will be running in our own process
-    // (and thus won't be supporting component replacement by other
-    // applications).
-    if (context.bindService(
-        Intent(context, MyFirebaseMessagingService::class.java),
-        mConnection, Context.BIND_AUTO_CREATE
-      )
-    ) {
-      LOG.info("Attached to the service")
-    } else {
-      LOG.info("ERROR")
-    }
-  }
+//  private fun doBindService(context:Context) {
+//    // Attempts to establish a connection with the service.  We use an
+//    // explicit class name because we want a specific service
+//    // implementation that we know will be running in our own process
+//    // (and thus won't be supporting component replacement by other
+//    // applications).
+//    if (context.bindService(
+//        Intent(context, MyFirebaseMessagingService::class.java),
+//        mConnection, Context.BIND_AUTO_CREATE
+//      )
+//    ) {
+//      LOG.info("Attached to the service")
+//    } else {
+//      LOG.info("ERROR")
+//    }
+//  }
 
   override fun onAttachedToEngine(
           @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
@@ -108,11 +110,15 @@ public class AmplifyPushNotificationsPinpointAndroidPlugin : FlutterPlugin, Acti
     val result = AtomicResult(_result, call.method)
 
     when (call.method) {
+      "registerForRemoteNotifications" -> {
+//        val serviceIntent = Intent(context,MyFirebaseMessagingService::class.java)
+//        context.startService(serviceIntent);
+        result.success("Not yet implemented");
+      }
       "requestMessagingPermission" -> {
         LOG.info("Asking for permission ")
         mainActivity!!.startActivity(Intent(context,PermissionActivity::class.java))
 
-//        askNotificationPermission()
         result.success(null)
       }
       "getToken" -> {
@@ -131,9 +137,9 @@ public class AmplifyPushNotificationsPinpointAndroidPlugin : FlutterPlugin, Acti
       }
       "onNewToken" -> {
         LOG.info("onNewToken native method ")
-        val serviceIntent = Intent(context,MyFirebaseMessagingService::class.java)
-//        serviceIntent.putExtra("channel", channel);
-        doBindService(context)
+//        val serviceIntent = Intent(context,MyFirebaseMessagingService::class.java)
+////        serviceIntent.putExtra("channel", channel);
+//        doBindService(context)
       }
       else -> result.notImplemented()
     }

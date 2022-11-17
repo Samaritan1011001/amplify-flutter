@@ -17,6 +17,9 @@ import 'dart:convert';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_flutter/src/amplify_impl.dart';
 
+final AmplifyLogger _logger = AmplifyLogger.category(Category.notifications)
+    .createChild('AmplifyHybridImpl');
+
 /// {@template amplify_flutter.amplify_hybrid_impl}
 /// A hybrid implementation of [AmplifyClass] which uses method channels for
 /// iOS/Android plugins and Dart, otherwise.
@@ -35,6 +38,7 @@ class AmplifyHybridImpl extends AmplifyClassImpl {
     await Future.wait(
       [
         ...Auth.plugins,
+        ...Notifications.plugins,
       ].map(
         (p) => p.configure(
           config: amplifyConfig,
@@ -48,6 +52,8 @@ class AmplifyHybridImpl extends AmplifyClassImpl {
 
   @override
   Future<void> addPlugin(AmplifyPluginInterface plugin) async {
+    // _logger.info('addPlugin in AmplifyHybridImpl called');
+
     if (isConfigured) {
       throw const AmplifyAlreadyConfiguredException(
         'Amplify has already been configured and adding plugins after configure is not supported.',
@@ -57,6 +63,8 @@ class AmplifyHybridImpl extends AmplifyClassImpl {
     }
     try {
       if (plugin is AuthPluginInterface) {
+        // _logger.info('Auth addPlugin in AmplifyHybridImpl called');
+
         await Auth.addPlugin(
           plugin,
           authProviderRepo: authProviderRepo,
@@ -90,6 +98,8 @@ class AmplifyHybridImpl extends AmplifyClassImpl {
       } else if (plugin is APIPluginInterface) {
         await API.addPlugin(plugin, authProviderRepo: authProviderRepo);
       } else if (plugin is NotificationsPluginInterface) {
+        // _logger.info('Notifications addPlugin in AmplifyHybridImpl called');
+
         await Notifications.addPlugin(
           plugin,
           authProviderRepo: authProviderRepo,

@@ -4,8 +4,6 @@ import 'amplifyconfiguration.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 
-
-
 void main() {
   AmplifyLogger().logLevel = LogLevel.info;
   runApp(const MyApp());
@@ -19,11 +17,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    super.initState();
-    // _configureAmplify();
-  }
+  AuthorizationStatus authorizationStatus = AuthorizationStatus.undetermined;
+  RemotePushMessage? foregroundMessage;
+  RemotePushMessage? backgroundMessage;
 
   // Platform messages are asynchronous, so we initialize in an async method.
   void _configureAmplify() async {
@@ -32,16 +28,14 @@ class _MyAppState extends State<MyApp> {
     // setState to update our non-existent appearance.
     if (!mounted) return;
 
-    // Configure analytics plugin
     AmplifyPushNotificaitonsPinpoint notificationsPlugin =
         AmplifyPushNotificaitonsPinpoint();
     final authPlugin = AmplifyAuthCognito();
 
-    Amplify.addPlugins([authPlugin, notificationsPlugin]);
+    await Amplify.addPlugins([authPlugin, notificationsPlugin]);
 
     try {
       await Amplify.configure(amplifyconfig);
-      
     } catch (e) {
       print(e.toString());
     }
@@ -61,35 +55,37 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   _configureAmplify();
-                  // try {
-                  //   await Amplify.configure(amplifyconfig);
-                  // } catch (e) {
-                  //   print(e.toString());
-                  // }
                 },
                 child: const Text('configure'),
               ),
+              // TextButton(
+              //   onPressed: () async {
+              //     try {
+              //       await Amplify.Notifications
+              //           .registerForRemoteNotifications();
+              //     } catch (e) {
+              //       print(e.toString());
+              //     }
+              //   },
+              //   child: const Text('registerForRemoteNotifications'),
+              // ),
               TextButton(
                 onPressed: () async {
                   try {
-                    await Amplify.Notifications
-                        .registerForRemoteNotifications();
-                  } catch (e) {
-                    print(e.toString());
-                  }
-                },
-                child: const Text('registerForRemoteNotifications'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  try {
-                    await Amplify.Notifications.requestMessagingPermission();
+                    PushNotificationSettings pushNotificationSettings =
+                        await Amplify.Notifications
+                            .requestMessagingPermission();
+                    setState(() {
+                      authorizationStatus =
+                          pushNotificationSettings.authorizationStatus;
+                    });
                   } catch (e) {
                     print(e.toString());
                   }
                 },
                 child: const Text('requestMessagingPermission'),
               ),
+              Text("Permission grant status: $authorizationStatus"),
               TextButton(
                 onPressed: () async {
                   try {
@@ -136,25 +132,42 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    await Amplify.Notifications
+                    final foregroundStream = await Amplify.Notifications
                         .onForegroundNotificationReceived();
+                    foregroundStream.listen((event) {
+                      setState(() {
+                        foregroundMessage = event;
+                      });
+                    });
                   } catch (e) {
                     print(e.toString());
                   }
                 },
                 child: const Text('onForegroundNotificationReceived'),
               ),
+              Text(foregroundMessage == null
+                  ? "No foreground message yet"
+                  : foregroundMessage!.messageId),
               TextButton(
                 onPressed: () async {
                   try {
-                    await Amplify.Notifications
+                    final backgroundStream = await Amplify.Notifications
                         .onBackgroundNotificationReceived();
+                    backgroundStream.listen((event) {
+                      setState(() {
+                        backgroundMessage = event;
+                      });
+                    });
                   } catch (e) {
                     print(e.toString());
                   }
                 },
                 child: const Text('onBackgroundNotificationReceived'),
               ),
+              Text(backgroundMessage == null
+                  ? "No background message yet"
+                  : backgroundMessage!.messageId),
+
               TextButton(
                 onPressed: () async {
                   try {

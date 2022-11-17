@@ -21,11 +21,11 @@ class NotificationsCategory
   @nonVirtual
   Category get category => Category.notifications;
 
-  Future<void> registerForRemoteNotifications() {
-    return plugins.length == 1
-        ? plugins[0].registerForRemoteNotifications()
-        : throw _pluginNotAddedException('Notifications');
-  }
+  // Future<void> registerForRemoteNotifications() {
+  //   return plugins.length == 1
+  //       ? plugins[0].registerForRemoteNotifications()
+  //       : throw _pluginNotAddedException('Notifications');
+  // }
 
   Future<PushNotificationSettings> requestMessagingPermission(
       {PushNotificationSettings? pushNotificationSettings}) {

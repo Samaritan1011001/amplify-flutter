@@ -25,9 +25,13 @@ const MethodChannel _channel = MethodChannel('com.amazonaws.amplify/amplify');
 class MethodChannelAmplify extends AmplifyClassImpl {
   /// {@macro amplify.method_channel_amplify}
   MethodChannelAmplify() : super.protected();
-
+  static final AmplifyLogger _logger =
+      AmplifyLogger.category(Category.notifications)
+          .createChild('MethodChannelAmplify');
   @override
   Future<void> addPlugin(AmplifyPluginInterface plugin) async {
+    _logger.info('addPlugin in MethodChannelAmplify called');
+
     if (isConfigured) {
       throw const AmplifyAlreadyConfiguredException(
         'Amplify has already been configured and adding plugins after configure is not supported.',
@@ -73,6 +77,8 @@ class MethodChannelAmplify extends AmplifyClassImpl {
           authProviderRepo: authProviderRepo,
         );
       } else if (plugin is NotificationsPluginInterface) {
+        _logger.info('Notfication plugin added in amplify_flutter -> $plugin');
+
         await Notifications.addPlugin(
           plugin,
           authProviderRepo: authProviderRepo,
@@ -103,6 +109,8 @@ class MethodChannelAmplify extends AmplifyClassImpl {
   @override
   Future<void> configurePlatform(String config) async {
     try {
+      // _logger.info('configurePlatform in amplify_flutter called');
+
       await _channel.invokeMethod<void>(
         'configure',
         <String, Object>{
@@ -110,9 +118,7 @@ class MethodChannelAmplify extends AmplifyClassImpl {
           'configuration': config,
         },
       );
-      await Future.wait(
-        Analytics.plugins.map((plugin) => plugin.onConfigure()),
-      );
+      // _logger.info('Native configure is called and finished');
 
     } on PlatformException catch (e) {
       if (e.code == 'AnalyticsException') {

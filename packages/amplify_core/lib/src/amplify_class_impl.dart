@@ -31,9 +31,13 @@ class AmplifyClassImpl extends AmplifyClass {
 
   /// {@macro amplify_flutter.amplify_class_impl}
   AmplifyClassImpl() : super.protected();
-
+  static final AmplifyLogger _logger =
+      AmplifyLogger.category(Category.notifications)
+          .createChild('AmplifyClassImpl');
   @override
   Future<void> addPlugin(AmplifyPluginInterface plugin) {
+    // _logger.info('addPlugin in amplify_core -> $plugin');
+
     switch (plugin.category) {
       case Category.analytics:
         return Analytics.addPlugin(
@@ -61,6 +65,8 @@ class AmplifyClassImpl extends AmplifyClass {
           authProviderRepo: authProviderRepo,
         );
       case Category.notifications:
+        // _logger.info('Notfication plugin added in amplify_core -> $plugin');
+
         return Notifications.addPlugin(
           plugin.cast(),
           authProviderRepo: authProviderRepo,
@@ -75,6 +81,10 @@ class AmplifyClassImpl extends AmplifyClass {
     final amplifyConfig = AmplifyConfig.fromJson(
       (jsonDecode(config) as Map<Object?, Object?>).cast(),
     );
+    // _logger.info('amplifyConfig -> $amplifyConfig');
+    // _logger.info(
+    //     'Notifications.plugins in core AmplifyClassImpl -> ${Notifications.plugins}');
+
     await Future.wait(
       [
         ...Analytics.plugins,

@@ -23,12 +23,15 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
   @nonVirtual
   Category get category => Category.notifications;
 
-  Future<void> onConfigure() async {}
+  Future<void> onConfigure({
+    AmplifyConfig? config,
+    required AmplifyAuthProviderRepository authProviderRepo,
+  }) async {}
 
-  Future<void> registerForRemoteNotifications() {
-    throw UnimplementedError(
-        'registerForRemoteNotifications() has not been implemented');
-  }
+  // Future<void> registerForRemoteNotifications() {
+  //   throw UnimplementedError(
+  //       'registerForRemoteNotifications() has not been implemented');
+  // }
 
   Future<PushNotificationSettings> requestMessagingPermission(
       {PushNotificationSettings? pushNotificationSettings}) {

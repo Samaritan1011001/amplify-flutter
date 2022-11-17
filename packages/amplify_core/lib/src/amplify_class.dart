@@ -20,7 +20,9 @@ import 'package:amplify_core/amplify_core.dart';
 import 'package:meta/meta.dart';
 
 import 'amplify_class_impl.dart';
-
+  final AmplifyLogger _logger =
+      AmplifyLogger.category(Category.notifications)
+          .createChild('AmplifyClass');
 /// {@template amplify_core.amplify_class}
 /// Amplify singleton class.
 ///
@@ -85,6 +87,7 @@ abstract class AmplifyClass {
   /// Throws AmplifyAlreadyConfiguredException if
   /// this method is called again (e.g. during hot reload).
   Future<void> configure(String configuration) async {
+    // _logger.info('configure in AmplifyClass called');
     if (isConfigured) {
       throw const AmplifyAlreadyConfiguredException(
         'Amplify has already been configured and re-configuration is not supported.',

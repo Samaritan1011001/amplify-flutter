@@ -28,6 +28,8 @@ part 'amplify_datastore_category.dart';
 part 'amplify_storage_category.dart';
 part 'amplify_notifications_category.dart';
 
+final AmplifyLogger _logger = AmplifyLogger.category(Category.notifications)
+    .createChild('AmplifyCategory');
 String _errorMsgPluginNotAdded(String pluginName) =>
     '$pluginName plugin has not been added to Amplify';
 
@@ -112,16 +114,24 @@ abstract class AmplifyCategory<P extends AmplifyPluginInterface> {
     P plugin, {
     required AmplifyAuthProviderRepository authProviderRepo,
   }) async {
+    // _logger.info('addPlugin in AmplifyCategory called');
+
     try {
       await plugin.addPlugin(
         authProviderRepo: authProviderRepo,
       );
       _plugins.add(plugin);
+      // _logger.info(
+      //     '_plugins in AmplifyCategory after adding a plugin -> $_plugins');
     } on AmplifyAlreadyConfiguredException {
       _plugins.add(plugin);
+      // _logger.info(
+      //     '_plugins in AmplifyCategory on AmplifyAlreadyConfiguredException -> $_plugins');
     } on AmplifyException {
+      // _logger.info('AmplifyException');
       rethrow;
     } on Exception catch (e) {
+      // _logger.info('Exception -> $e');
       throw AmplifyException(e.toString());
     }
   }

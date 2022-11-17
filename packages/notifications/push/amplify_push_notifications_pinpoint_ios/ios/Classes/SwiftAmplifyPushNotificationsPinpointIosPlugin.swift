@@ -13,16 +13,17 @@ extension Data {
 public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPlugin {
 
     let channel:FlutterMethodChannel?;
+    var result:FlutterResult!;
 
     public init(channel:FlutterMethodChannel) {
         self.channel = channel
     }
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "com.amazonaws.amplify/notifications_pinpoint", binaryMessenger: registrar.messenger())
-      let newTokenChannel = FlutterEventChannel(name: "com.amazonaws.amplify/event_channel/notifications_pinpoint", binaryMessenger: registrar.messenger())
+//      let newTokenChannel = FlutterEventChannel(name: "com.amazonaws.amplify/event_channel/notifications_pinpoint", binaryMessenger: registrar.messenger())
       let instance = SwiftAmplifyPushNotificationsPinpointIosPlugin(channel:channel)
     registrar.addMethodCallDelegate(instance, channel: channel)
-      registrar.addMethodCallDelegate(instance, channel: newTokenChannel)
+//      registrar.addMethodCallDelegate(instance, channel: newTokenChannel)
     registrar.addApplicationDelegate(instance)
   }
 
@@ -33,6 +34,7 @@ public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPl
 
   }
     public func innerHandle(method: String, callArgs: Any?, result: @escaping FlutterResult) {
+        self.result = result
         switch method {
         case "requestMessagingPermission": do {
             let center = UNUserNotificationCenter.current()
@@ -41,15 +43,22 @@ public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPl
 //                if let error = error {
 //                    // Handle the error here.
 //                }
-
+                result(granted)
                 // Enable or disable features based on the authorization.
             }
         }
-        case "onNewToken": do {
+        case "registerForRemoteNotifications": do {
             UIApplication.shared.registerForRemoteNotifications()
+            UNUserNotificationCenter.current().delegate = self
+
+//            result(true)
+        }
+        case "onNewToken": do {
+               UIApplication.shared.registerForRemoteNotifications()
+                
         }
         case "getToken": do {
-            UIApplication.shared.registerForRemoteNotifications()
+               UIApplication.shared.registerForRemoteNotifications()
         }
         default:
                    result(FlutterMethodNotImplemented)
@@ -75,8 +84,8 @@ public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPl
                     deviceToken: Data) {
         let deviceTokenString = deviceToken.hexString
         print("deviceToken : \(deviceTokenString)")
-        self.channel?.invokeMethod("getToken",arguments: deviceTokenString);
-//       self.sendDeviceTokenToServer(data: deviceToken)
+//        self.channel?.invokeMethod("getToken",arguments: deviceTokenString);
+        result(deviceTokenString);
     }
 
     public func application(_ application: UIApplication,
@@ -90,10 +99,40 @@ public class SwiftAmplifyPushNotificationsPinpointIosPlugin: NSObject, FlutterPl
                 withCompletionHandler completionHandler:
                    @escaping () -> Void) {
         
-        print("received notificaiton : \(response)")
+        print("received notificaiton on tap: \(response)")
 
     completionHandler()
     }
+    
+//    public func userNotificationCenter(_ center: UNUserNotificationCenter,
+//             willPresent notification: UNNotification,
+//             withCompletionHandler completionHandler:
+//                @escaping (UNNotificationPresentationOptions) -> Void) {
+//        print("received notificaiton in foreground: \(notification)")
+//        self.channel?.invokeMethod("onForegroundNotificationReceived",arguments: "notification");
+//
+//        // Don't alert the user for other types.
+//           completionHandler(UNNotificationPresentationOptions(rawValue: 0))
+//    }
+    
+    public func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable : Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) -> Bool {
+            if UIApplication.shared.applicationState == .active  {
+                self.channel?.invokeMethod("onForegroundNotificationReceived",arguments: "notification");
+    // Go do some UI stuff
+            }else{
+                self.channel?.invokeMethod("onBackgroundNotificationReceived",arguments: "notification");
+
+            }
+        print("received notificaiton in background: \(userInfo)")
+
+        completionHandler(.noData)
+        return true
+    }
+
+
     
     
 }
