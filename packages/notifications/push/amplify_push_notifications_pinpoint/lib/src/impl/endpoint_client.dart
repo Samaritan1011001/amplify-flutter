@@ -14,7 +14,7 @@
 
 // import 'package:amplify_analytics_pinpoint_dart/src/impl/analytics_client/endpoint_client/endpoint_global_fields_manager.dart';
 import 'package:amplify_core/amplify_core.dart';
-import 'package:amplify_push_notifications_pinpoint/endpoint_global_fields_manager.dart';
+import 'package:amplify_push_notifications_pinpoint/src/impl/endpoint_global_fields_manager.dart';
 import 'package:amplify_push_notifications_pinpoint/src/sdk/pinpoint.dart';
 import 'package:amplify_secure_storage/amplify_secure_storage.dart';
 import 'package:built_collection/built_collection.dart';

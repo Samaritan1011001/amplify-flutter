@@ -1,5 +1,5 @@
 import 'package:amplify_core/amplify_core.dart';
-import 'package:amplify_push_notifications_pinpoint/endpoint_client.dart';
+import 'package:amplify_push_notifications_pinpoint/src/impl/endpoint_client.dart';
 import 'package:amplify_push_notifications_pinpoint/src/sdk/pinpoint.dart'
     as pinpoint_sdk;
 import 'package:amplify_secure_storage/amplify_secure_storage.dart';
