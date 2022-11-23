@@ -37,8 +37,15 @@ class AmplifyHybridImpl extends AmplifyClassImpl {
     );
     await Future.wait(
       [
+        ...API.plugins,
         ...Auth.plugins,
+<<<<<<< HEAD
         ...Notifications.plugins,
+=======
+        ...Analytics.plugins,
+        ...Storage.plugins,
+        ...DataStore.plugins,
+>>>>>>> bb9c38b06052a371e7668bfea1cf827032979ca2
       ].map(
         (p) => p.configure(
           config: amplifyConfig,

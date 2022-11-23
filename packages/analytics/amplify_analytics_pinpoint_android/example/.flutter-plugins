@@ -1,0 +1,14 @@
+# This is a generated file; do not edit or check into version control.
+amplify_analytics_pinpoint=/Users/manojnb/code/work/amplify_fullter_projects/my_fork/amplify-flutter/packages/analytics/amplify_analytics_pinpoint/
+amplify_analytics_pinpoint_android=/Users/manojnb/code/work/amplify_fullter_projects/my_fork/amplify-flutter/packages/analytics/amplify_analytics_pinpoint_android/
+amplify_analytics_pinpoint_ios=/Users/manojnb/code/work/amplify_fullter_projects/my_fork/amplify-flutter/packages/analytics/amplify_analytics_pinpoint_ios/
+amplify_flutter=/Users/manojnb/code/work/amplify_fullter_projects/my_fork/amplify-flutter/packages/amplify/amplify_flutter/
+amplify_flutter_android=/Users/manojnb/code/work/amplify_fullter_projects/my_fork/amplify-flutter/packages/amplify/amplify_flutter_android/
+amplify_flutter_ios=/Users/manojnb/code/work/amplify_fullter_projects/my_fork/amplify-flutter/packages/amplify/amplify_flutter_ios/
+amplify_secure_storage=/Users/manojnb/code/work/amplify_fullter_projects/my_fork/amplify-flutter/packages/secure_storage/amplify_secure_storage/
+path_provider=/Users/manojnb/.pub-cache/hosted/pub.dartlang.org/path_provider-2.0.11/
+path_provider_android=/Users/manojnb/.pub-cache/hosted/pub.dartlang.org/path_provider_android-2.0.21/
+path_provider_ios=/Users/manojnb/.pub-cache/hosted/pub.dartlang.org/path_provider_ios-2.0.11/
+path_provider_linux=/Users/manojnb/.pub-cache/hosted/pub.dartlang.org/path_provider_linux-2.1.7/
+path_provider_macos=/Users/manojnb/.pub-cache/hosted/pub.dartlang.org/path_provider_macos-2.0.6/
+path_provider_windows=/Users/manojnb/.pub-cache/hosted/pub.dartlang.org/path_provider_windows-2.1.3/

@@ -118,14 +118,13 @@ class MethodChannelAmplify extends AmplifyClassImpl {
           'configuration': config,
         },
       );
+<<<<<<< HEAD
       // _logger.info('Native configure is called and finished');
 
+=======
+>>>>>>> bb9c38b06052a371e7668bfea1cf827032979ca2
     } on PlatformException catch (e) {
-      if (e.code == 'AnalyticsException') {
-        throw AnalyticsException.fromMap(
-          Map<String, String>.from(e.details as Map),
-        );
-      } else if (e.code == 'AmplifyException') {
+      if (e.code == 'AmplifyException') {
         throw AmplifyException.fromMap(
           Map<String, String>.from(e.details as Map),
         );
@@ -141,6 +140,7 @@ class MethodChannelAmplify extends AmplifyClassImpl {
       }
     }
   }
+<<<<<<< HEAD
 
   @override
   Future<void> reset() async {
@@ -151,4 +151,6 @@ class MethodChannelAmplify extends AmplifyClassImpl {
     API.plugins.clear();
     Notifications.plugins.clear();
   }
+=======
+>>>>>>> bb9c38b06052a371e7668bfea1cf827032979ca2
 }
