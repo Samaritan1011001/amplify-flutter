@@ -232,16 +232,6 @@ class EndpointClient {
             ),
           )
           .result;
-      // .then((res) => _logger.info("Update endpoint result -> $res"))
-      // .onError(
-      //   (error, stackTrace) =>
-      //       _logger.info("Error updating endpoint $error"),
-      // )
-      // .whenComplete(() => _logger.info("Update endpoint complete"))
-      // .timeout(
-      //   const Duration(seconds: 20),
-      //   onTimeout: () => _logger.info("Request timed out!"),
-      // );
       _logger.info("Update endpoint result -> $res");
     } catch (error) {
       _logger.error('updateEndpoint - exception encountered: $error');
