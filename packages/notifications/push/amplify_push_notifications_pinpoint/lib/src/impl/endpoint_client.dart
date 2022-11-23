@@ -14,10 +14,11 @@
 
 // import 'package:amplify_analytics_pinpoint_dart/src/impl/analytics_client/endpoint_client/endpoint_global_fields_manager.dart';
 import 'package:amplify_core/amplify_core.dart';
+import 'package:amplify_push_notifications_pinpoint/src/flutter_provider_interfaces/device_context_info_provider.dart';
+import 'package:amplify_push_notifications_pinpoint/src/impl/device_context_info_provider/flutter_device_context_info_provider.dart';
 import 'package:amplify_push_notifications_pinpoint/src/impl/endpoint_global_fields_manager.dart';
 import 'package:amplify_push_notifications_pinpoint/src/sdk/pinpoint.dart';
 import 'package:amplify_secure_storage/amplify_secure_storage.dart';
-import 'package:built_collection/built_collection.dart';
 import 'package:meta/meta.dart';
 import 'package:uuid/uuid.dart';
 
@@ -40,6 +41,7 @@ class EndpointClient {
   );
 
   static EndpointClient? _instance;
+  static DeviceContextInfoProvider? _deviceContextInfoProvider;
 
   /// {@macro amplify_analytics_pinpoint_dart.endpoint_client}
   static Future<EndpointClient> getInstance(
@@ -50,6 +52,9 @@ class EndpointClient {
       // DeviceContextInfo? deviceContextInfo,
       ) async {
     if (_instance != null) return _instance!;
+    _deviceContextInfoProvider = const FlutterDeviceContextInfoProvider();
+    final DeviceContextInfo? deviceContextInfo =
+        await _deviceContextInfoProvider?.getDeviceInfoDetails();
 
     // Retrieve Unique ID
     final savedFixedEndpointId =
@@ -66,10 +71,12 @@ class EndpointClient {
 
     final globalFieldsManager =
         await EndpointGlobalFieldsManager.getInstance(keyValueStore);
-
+    final channelType = deviceContextInfo?.platform == DevicePlatform.iOS
+          ? ChannelType.apnsSandbox
+          : ChannelType.gcm;
     final endpointBuilder = PublicEndpointBuilder()
       ..address = deviceToken
-      ..channelType = ChannelType.gcm
+      ..channelType = channelType
       ..optOut = 'NONE';
     // ..effectiveDate = DateTime.now().toUtc().toIso8601String();
     // ..demographic = (EndpointDemographicBuilder()
@@ -211,7 +218,6 @@ class EndpointClient {
   Future<void> updateEndpoint() async {
     try {
       _logger.info(" IN Update endpoint result ");
-      _logger.info("_pinpointClient -> $_pinpointClient}");
       final endpointReq = _endpointToRequest(getPublicEndpoint());
       _logger.info("_appId -> $_appId");
       _logger.info("_fixedEndpointId -> $_fixedEndpointId");
@@ -226,16 +232,16 @@ class EndpointClient {
             ),
           )
           .result;
-          // .then((res) => _logger.info("Update endpoint result -> $res"))
-          // .onError(
-          //   (error, stackTrace) =>
-          //       _logger.info("Error updating endpoint $error"),
-          // )
-          // .whenComplete(() => _logger.info("Update endpoint complete"))
-          // .timeout(
-          //   const Duration(seconds: 20),
-          //   onTimeout: () => _logger.info("Request timed out!"),
-          // );
+      // .then((res) => _logger.info("Update endpoint result -> $res"))
+      // .onError(
+      //   (error, stackTrace) =>
+      //       _logger.info("Error updating endpoint $error"),
+      // )
+      // .whenComplete(() => _logger.info("Update endpoint complete"))
+      // .timeout(
+      //   const Duration(seconds: 20),
+      //   onTimeout: () => _logger.info("Request timed out!"),
+      // );
       _logger.info("Update endpoint result -> $res");
     } catch (error) {
       _logger.error('updateEndpoint - exception encountered: $error');
@@ -245,18 +251,19 @@ class EndpointClient {
 
   /// Create an EndpointRequest object from a local Endpoint instance
   EndpointRequest _endpointToRequest(PublicEndpoint publicEndpoint) {
-    return EndpointRequest.build((b) => b
-          ..address = publicEndpoint.address
-          ..channelType = publicEndpoint.channelType
-          ..effectiveDate = publicEndpoint.effectiveDate
-          ..endpointStatus = publicEndpoint.endpointStatus
-          ..optOut = publicEndpoint.optOut
-          ..requestId = publicEndpoint.requestId,
-        // ..attributes.replace(publicEndpoint.attributes)
-        // ..demographic = publicEndpoint.demographic?.toBuilder()
-        // ..location = publicEndpoint.location?.toBuilder()
-        // ..metrics.replace(publicEndpoint.metrics ?? const {})
-        // ..user = publicEndpoint.user?.toBuilder(),
-        );
+    return EndpointRequest.build(
+      (b) => b
+        ..address = publicEndpoint.address
+        ..channelType = publicEndpoint.channelType
+        ..effectiveDate = publicEndpoint.effectiveDate
+        ..endpointStatus = publicEndpoint.endpointStatus
+        ..optOut = publicEndpoint.optOut
+        ..requestId = publicEndpoint.requestId,
+      // ..attributes.replace(publicEndpoint.attributes)
+      // ..demographic = publicEndpoint.demographic?.toBuilder()
+      // ..location = publicEndpoint.location?.toBuilder()
+      // ..metrics.replace(publicEndpoint.metrics ?? const {})
+      // ..user = publicEndpoint.user?.toBuilder(),
+    );
   }
 }

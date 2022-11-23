@@ -7,8 +7,8 @@ environment:
   flutter: ">=3.0.0"
 
 dependencies:
-  amplify_push_notifications_pinpoint_android: ">=1.0.0-next.0 <1.0.0-next.1"
-  amplify_push_notifications_pinpoint_ios: ">=1.0.0-next.0 <1.0.0-next.1"
+  amplify_push_notification_android: ">=1.0.0-next.0 <1.0.0-next.1"
+  amplify_push_notification_ios: ">=1.0.0-next.0 <1.0.0-next.1"
   amplify_secure_storage: ^0.1.0
   amplify_core: ">=1.0.0-next.0 <1.0.0-next.1"
   aws_common: ^0.2.0
@@ -21,8 +21,7 @@ dependencies:
   smithy: ^0.2.0
   smithy_aws: ^0.2.0
   uuid: ^3.0.0
-  amplify_auth_cognito:
-    path: ../../../auth/amplify_auth_cognito
+  amplify_auth_cognito: ^0.1.0
 
 dev_dependencies:
   amplify_lints: ^2.0.0
