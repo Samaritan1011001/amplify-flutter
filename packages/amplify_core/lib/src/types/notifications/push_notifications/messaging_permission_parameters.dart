@@ -13,19 +13,18 @@
  * permissions and limitations under the License.
  */
 
-import 'package:amplify_core/src/types/notifications/push_notifications/authorization_status.dart';
 
-class PushNotificationSettings {
+class PushNotificationPermissionRequest {
   final bool alert;
   final bool badge;
   final bool sound;
-  AuthorizationStatus authorizationStatus =
-      AuthorizationStatus.undetermined;
 
 
-  PushNotificationSettings({
-    this.alert = false,
+  PushNotificationPermissionRequest({
+    this.alert = true,
     this.badge = true,
-    this.sound = false,
+    this.sound = true,
   });
 }
+
+

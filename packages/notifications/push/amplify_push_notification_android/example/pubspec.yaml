@@ -1,0 +1,30 @@
+name: amplify_push_notification_android_example
+description: Demonstrates how to use the amplify_push_notifications_pinpoint_android plugin.
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+environment:
+  sdk: '>=2.18.1 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  amplify_push_notification:
+    path: ../../amplify_push_notification
+  amplify_flutter:
+    path: ../../../../amplify/amplify_flutter
+  cupertino_icons: ^1.0.2
+
+dependency_overrides:
+  amplify_push_notification_android:
+    path: ../
+  amplify_flutter_android:
+    path: ../../../../amplify/amplify_flutter_android
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  amplify_lints: ^1.0.0
+
+flutter:
+  uses-material-design: true

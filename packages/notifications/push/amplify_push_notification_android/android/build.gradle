@@ -1,0 +1,61 @@
+group 'com.amazonaws.amplify.amplify_push_notification.amplify_push_notification_android'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext.kotlin_version = '1.6.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.1.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply from: './coverage.gradle'
+
+android {
+    compileSdkVersion 33
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        minSdkVersion 16
+    }
+}
+// Logic for finding sibling plugins, from `flutter_tools/gradle/flutter.gradle`
+def amplifyFlutter = project.rootProject.findProject(':amplify_flutter_android')
+
+dependencies {
+    api amplifyFlutter
+
+    implementation 'com.amplifyframework:core:1.36.5-dev-preview.0'
+    implementation 'com.google.firebase:firebase-bom:30.5.0'
+    implementation "com.google.firebase:firebase-messaging-ktx:23.0.8"
+
+    api 'androidx.appcompat:appcompat:1.3.1'
+    api "androidx.activity:activity-ktx:1.2.0"
+    api "androidx.fragment:fragment-ktx:1.3.0"
+}

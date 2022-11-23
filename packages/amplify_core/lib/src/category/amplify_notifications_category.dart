@@ -27,11 +27,11 @@ class NotificationsCategory
   //       : throw _pluginNotAddedException('Notifications');
   // }
 
-  Future<PushNotificationSettings> requestMessagingPermission(
-      {PushNotificationSettings? pushNotificationSettings}) {
+  Future<PushPermissionRequestStatus> requestMessagingPermission(
+      {PushNotificationPermissionRequest? pushNotificationPermissionRequest}) {
     return plugins.length == 1
         ? plugins[0].requestMessagingPermission(
-            pushNotificationSettings: pushNotificationSettings)
+            pushNotificationPermissionRequest: pushNotificationPermissionRequest)
         : throw _pluginNotAddedException('Notifications');
   }
 

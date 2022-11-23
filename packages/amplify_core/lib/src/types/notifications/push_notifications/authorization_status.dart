@@ -13,8 +13,8 @@
  * permissions and limitations under the License.
  */
 
-enum AuthorizationStatus {
-  authorized,
-  denied,
-  undetermined,
+enum PushPermissionRequestStatus {
+    granted,
+    denied,
+    undetermined,
 }

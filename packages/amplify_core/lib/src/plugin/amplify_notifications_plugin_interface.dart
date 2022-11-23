@@ -33,8 +33,8 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
   //       'registerForRemoteNotifications() has not been implemented');
   // }
 
-  Future<PushNotificationSettings> requestMessagingPermission(
-      {PushNotificationSettings? pushNotificationSettings}) {
+  Future<PushPermissionRequestStatus> requestMessagingPermission(
+      {PushNotificationPermissionRequest? pushNotificationPermissionRequest}) {
     throw UnimplementedError(
         'requestMessagingPermission() has not been implemented');
   }

@@ -17,9 +17,10 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  AuthorizationStatus authorizationStatus = AuthorizationStatus.undetermined;
+  PushPermissionRequestStatus pushPermissionRequestStatus = PushPermissionRequestStatus.undetermined;
   RemotePushMessage? foregroundMessage;
   RemotePushMessage? backgroundMessage;
+  RemotePushMessage? notificationOpenedMessage;
 
   // Platform messages are asynchronous, so we initialize in an async method.
   void _configureAmplify() async {
@@ -72,12 +73,10 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    PushNotificationSettings pushNotificationSettings =
+                    setState(() async {
+                      pushPermissionRequestStatus =
                         await Amplify.Notifications
                             .requestMessagingPermission();
-                    setState(() {
-                      authorizationStatus =
-                          pushNotificationSettings.authorizationStatus;
                     });
                   } catch (e) {
                     print(e.toString());
@@ -85,7 +84,7 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text('requestMessagingPermission'),
               ),
-              Text("Permission grant status: $authorizationStatus"),
+              Text("Permission grant status: $pushPermissionRequestStatus"),
               TextButton(
                 onPressed: () async {
                   try {
@@ -178,6 +177,9 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text('onNotificationOpenedApp'),
               ),
+              Text(notificationOpenedMessage == null
+                  ? "No notification opened message yet"
+                  : notificationOpenedMessage!.messageId),
               TextButton(
                 onPressed: () async {
                   try {

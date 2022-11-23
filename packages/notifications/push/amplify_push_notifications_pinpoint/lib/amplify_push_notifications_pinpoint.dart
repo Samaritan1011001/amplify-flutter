@@ -15,27 +15,12 @@
 
 library amplify_push_notifications_pinpoint;
 
-import 'dart:io';
+import 'package:amplify_push_notification/amplify_push_notification.dart';
+import 'package:amplify_push_notifications_pinpoint/src/impl/pinpoint_client.dart';
 
-import 'package:amplify_core/amplify_core.dart';
-import 'package:meta/meta.dart';
-
-import 'method_channel_amplify.dart';
-
-
-/// {@template amplify_analytics_pinpoint.amplify_analytics_pinpoint}
-/// The AWS Pinpoint implementation of the Amplify Analytics category.
-/// {@endtemplate}
-abstract class AmplifyPushNotificaitonsPinpoint extends NotificationsPluginInterface {
-  /// {@macro amplify_analytics_pinpoint.amplify_analytics_pinpoint}
-  factory AmplifyPushNotificaitonsPinpoint() {
-    if (zIsWeb || Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-      throw UnsupportedError('This platform is not supported yet');
-    }
-    return AmplifyNotificationsPinpointMethodChannel();
-  }
-
-  /// Protected constructor for subclasses.
-  @protected
-  AmplifyPushNotificaitonsPinpoint.protected();
+class AmplifyPushNotificaitonsPinpoint extends AmplifyPushNotification {
+  AmplifyPushNotificaitonsPinpoint()
+      : super(
+          serviceProviderClient: PinpointClient(),
+        );
 }
