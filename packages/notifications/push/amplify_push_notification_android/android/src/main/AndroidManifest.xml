@@ -1,9 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.amazonaws.amplify.amplify_push_notification.amplify_push_notification_android">
     <application>
-        <activity
-            android:name=".PermissionActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".PermissionActivity"-->
+<!--            android:exported="false" />-->
         <!--        <service-->
         <!--            android:name=".MyFirebaseMessagingService"-->
         <!--            android:exported="false">-->
@@ -12,7 +12,7 @@
         <!--            </intent-filter>-->
         <!--        </service>-->
         <receiver
-            android:name=".AmplifyPushNotificationBroadcastReceiver"
+            android:name=".PushNotificationReceiver"
             android:exported="true"
             android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>

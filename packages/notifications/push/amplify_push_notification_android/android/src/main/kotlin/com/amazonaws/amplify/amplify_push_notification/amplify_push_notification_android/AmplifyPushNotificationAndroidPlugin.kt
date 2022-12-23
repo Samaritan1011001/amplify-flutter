@@ -5,10 +5,11 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.NonNull
 import com.amazonaws.amplify.AtomicResult
-import com.amazonaws.amplify.amplify_push_notification.amplify_push_notification_android.PermissionActivity
+//import com.amazonaws.amplify.amplify_push_notification.amplify_push_notification_android.PermissionActivity
 import com.amplifyframework.core.Amplify
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingService
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -16,15 +17,16 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import org.json.JSONObject
 
 /** AmplifyPushNotificationAndroidPlugin */
-class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, MethodCallHandler {
+class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, MethodCallHandler, FirebaseMessagingService() {
 
   private lateinit var channel: MethodChannel
   private var mainActivity: Activity? = null
   private lateinit var context: Context
   private val LOG = Amplify.Logging.forNamespace("amplify:flutter:notifications_pinpoint")
-
+  private var isListeningToOnNewToken = false
   override fun onAttachedToEngine(
     @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
   ) {
@@ -35,6 +37,7 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
     )
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
+    PushNotificationEventManager.initializeWithMethodChannel(channel)
   }
 
 
@@ -44,13 +47,11 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
 
     when (call.method) {
       "registerForRemoteNotifications" -> {
-//        val serviceIntent = Intent(context,MyFirebaseMessagingService::class.java)
-//        context.startService(serviceIntent);
         result.success("Not yet implemented");
       }
       "requestMessagingPermission" -> {
         LOG.info("Asking for permission ")
-        mainActivity!!.startActivity(Intent(context, PermissionActivity::class.java))
+//        mainActivity!!.startActivity(Intent(context, PermissionActivity::class.java))
 
         result.success(null)
       }
@@ -70,14 +71,29 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
       }
       "onNewToken" -> {
         LOG.info("onNewToken native method ")
-//        val serviceIntent = Intent(context,MyFirebaseMessagingService::class.java)
-////        serviceIntent.putExtra("channel", channel);
-//        doBindService(context)
+        isListeningToOnNewToken = true
       }
       else -> result.notImplemented()
     }
+
+
   }
 
+  /**
+   * Called if the FCM registration token is updated. This may occur if the security of
+   * the previous token had been compromised. Note that this is called when the
+   * FCM registration token is initially generated so this is where you would retrieve the token.
+   */
+  override fun onNewToken(token: String) {
+    LOG.info("Refreshed token: $token")
+    if(isListeningToOnNewToken){
+      val tokenDataJson = JSONObject()
+      tokenDataJson.apply {
+        put("token", token)
+      }
+      PushNotificationEventManager.sendEvent(PushNotificationEventType.NEW_TOKEN, tokenDataJson)
+    }
+  }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     this.mainActivity = binding.activity

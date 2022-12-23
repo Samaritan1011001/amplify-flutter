@@ -1,21 +1,25 @@
 library amplify_push_notification;
 
-import 'dart:io';
-
-import 'package:amplify_core/amplify_core.dart';
-import 'package:meta/meta.dart';
-
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:amplify_core/amplify_core.dart';
 // import 'package:amplify_push_notifications_pinpoint/endpoint_client.dart';
 // import 'package:amplify_push_notifications_pinpoint/src/impl/device_info_context_provider.dart';
 // import 'package:amplify_push_notifications_pinpoint/src/sdk/pinpoint.dart';
 import 'package:flutter/services.dart';
-import 'package:amplify_secure_storage/amplify_secure_storage.dart';
-import '../amplify_push_notification.dart';
+import 'package:workmanager/workmanager.dart';
 
 // import 'package:amplify_push_notifications_pinpoint/lib/sdk/pinpoint.dart';
+
+@pragma(
+    'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) {
+    print("Native called background task:"); //simpleTask will be emitted here.
+    return Future.value(true);
+  });
+}
 
 const MethodChannel _methodChannel =
     MethodChannel('com.amazonaws.amplify/notifications_pinpoint');
@@ -31,34 +35,66 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
 
   final StreamController<String> _newTokenStream = StreamController<String>();
   final StreamController<RemotePushMessage> _foregroundEventStreamController =
-      StreamController<RemotePushMessage>();
+      StreamController<RemotePushMessage>.broadcast();
   final StreamController<RemotePushMessage> _backgroundEventStreamController =
-      StreamController<RemotePushMessage>();
+      StreamController<RemotePushMessage>.broadcast();
   final StreamController<RemotePushMessage>
       _notificationOpenedStreamController =
-      StreamController<RemotePushMessage>();
+      StreamController<RemotePushMessage>.broadcast();
+
   bool _isConfigured = false;
 
   Future<dynamic> nativeMethodCallHandler(MethodCall methodCall) async {
     print('Native call!');
     switch (methodCall.method) {
-      case "onForegroundNotificationReceived":
-        print("onForegroundNotificationReceived");
-        _foregroundEventStreamController.add(RemotePushMessage());
+      // case "onForegroundNotificationReceived":
+      //   print("onForegroundNotificationReceived");
+      //   // _foregroundEventStreamController.add(RemotePushMessage());
+      //   break;
+      // case "onBackgroundNotificationReceived":
+      //   print("onBackgroundNotificationReceived");
+      //   // _backgroundEventStreamController.add(RemotePushMessage());
+      //   break;
+      // case "onNotificationOpenedApp":
+      //   print("onNotificationOpenedApp");
+      //   // _notificationOpenedStreamController.add(RemotePushMessage());
+      //   break;
+      // case "onNewToken":
+      //   print("onNewToken");
+      //   _newTokenStream.add("token");
+      //   break;
+      // case "RTNPushNotification_NewToken":
+      //   print("Android onNewToken");
+      //   final jData = jsonDecode(methodCall.arguments);
+      //   print("Android onNewToken data -> $jData");
+      //   _newTokenStream.add(jData);
+      //   break;
+      case "FOREGROUND_MESSAGE_RECEIVED":
+        try {
+          final jData = jsonDecode(methodCall.arguments);
+          print(
+              "ForegroundMessageReceived data IOS -> ${methodCall.arguments}");
+
+          print("ForegroundMessageReceived data -> $jData");
+          _foregroundEventStreamController.sink
+              .add(RemotePushMessage.fromJson(jData));
+        } catch (e) {
+          _logger.info("Error $e");
+        }
         break;
-      case "onBackgroundNotificationReceived":
-        print("onBackgroundNotificationReceived");
-        _backgroundEventStreamController.add(RemotePushMessage());
-        break;
-      case "onNotificationOpenedApp":
-        print("onNotificationOpenedApp");
-        _notificationOpenedStreamController.add(RemotePushMessage());
-        break;
-      case "onNewToken":
-        print("onNewToken");
-        _newTokenStream.add("token");
+      case "BACKGROUND_MESSAGE_RECEIVED":
+        try {
+          final jData = jsonDecode(methodCall.arguments);
+          print("BackgroundMessageReceived data -> $jData");
+          _backgroundEventStreamController.sink
+              .add(RemotePushMessage.fromJson(jData));
+          // Workmanager().registerOneOffTask("task-identifier", "simpleTask");
+        } catch (e) {
+          _logger.info("Error $e");
+        }
         break;
       default:
+        print("Nothing ${methodCall.method}");
         return "Nothing";
     }
   }
@@ -93,11 +129,16 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
           },
         ),
       );
-      onForegroundNotificationReceived()
-          .then((stream) => stream.listen((event) {}));
-      onBackgroundNotificationReceived()
-          .then((stream) => stream.listen((event) {}));
-      onNotificationOpenedApp().then((stream) => stream.listen((event) {}));
+      onForegroundNotificationReceived().listen((event) {
+        // AppleNotification notif = event.notification as AppleNotification;
+
+        _logger.info("received notification in foreground listener $event");
+      });
+
+      onBackgroundNotificationReceived().listen((event) {
+        _logger.info("received notification in background listener $event");
+      });
+      onNotificationOpenedApp().listen((event) {});
 
       // Initialize Endpoint Client
       await serviceProviderClient?.init(
@@ -109,6 +150,11 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     // Register with service provider
     await _registerDevice();
 
+    Workmanager().initialize(
+        callbackDispatcher, // The top level function, aka callbackDispatcher
+        isInDebugMode:
+            true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+        );
     _isConfigured = true;
   }
 
@@ -125,19 +171,19 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
 
   @override
   Future<PushPermissionRequestStatus> requestMessagingPermission(
-      {PushNotificationPermissionRequest? pushNotificationPermissionRequest}) async {
-    PushPermissionRequestStatus pushPermissionRequestStatus = PushPermissionRequestStatus.undetermined;
-    pushNotificationPermissionRequest ??= PushNotificationPermissionRequest();
+      {bool? alert = true, bool? badge = true, bool? sound = true}) async {
+    PushPermissionRequestStatus pushPermissionRequestStatus =
+        PushPermissionRequestStatus.undetermined;
 
     bool? granted =
         await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
 
     if (granted != null) {
-      pushPermissionRequestStatus =
-          granted ? PushPermissionRequestStatus.granted : PushPermissionRequestStatus.denied;
+      pushPermissionRequestStatus = granted
+          ? PushPermissionRequestStatus.granted
+          : PushPermissionRequestStatus.denied;
     }
-    _logger.info(
-        "pushPermissionRequestStatus -> $pushPermissionRequestStatus");
+    _logger.info("pushPermissionRequestStatus -> $pushPermissionRequestStatus");
     return pushPermissionRequestStatus;
   }
 
@@ -167,20 +213,20 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   }
 
   @override
-  Future<Stream<RemotePushMessage>> onForegroundNotificationReceived() async =>
+  Stream<RemotePushMessage> onForegroundNotificationReceived() =>
       _foregroundEventStreamController.stream;
 
   @override
-  Future<Stream<RemotePushMessage>> onBackgroundNotificationReceived() async =>
+  Stream<RemotePushMessage> onBackgroundNotificationReceived() =>
       _backgroundEventStreamController.stream;
 
   @override
-  Future<Stream<RemotePushMessage>> onNotificationOpenedApp() async =>
+  Stream<RemotePushMessage> onNotificationOpenedApp() =>
       _notificationOpenedStreamController.stream;
 
   @override
   Future<RemotePushMessage> getInitialNotification() async {
-    return RemotePushMessage();
+    return RemotePushMessage(messageId: 'test');
   }
 
   @override

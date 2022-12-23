@@ -28,10 +28,10 @@ class NotificationsCategory
   // }
 
   Future<PushPermissionRequestStatus> requestMessagingPermission(
-      {PushNotificationPermissionRequest? pushNotificationPermissionRequest}) {
+      {bool? alert = true, bool? badge = true, bool? sound = true}) {
     return plugins.length == 1
         ? plugins[0].requestMessagingPermission(
-            pushNotificationPermissionRequest: pushNotificationPermissionRequest)
+            alert: alert, badge: badge, sound: sound)
         : throw _pluginNotAddedException('Notifications');
   }
 
@@ -47,19 +47,19 @@ class NotificationsCategory
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Future<Stream<RemotePushMessage>> onForegroundNotificationReceived() {
+  Stream<RemotePushMessage> onForegroundNotificationReceived() {
     return plugins.length == 1
         ? plugins[0].onForegroundNotificationReceived()
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Future<Stream<RemotePushMessage>> onBackgroundNotificationReceived() {
+  Stream<RemotePushMessage> onBackgroundNotificationReceived() {
     return plugins.length == 1
         ? plugins[0].onBackgroundNotificationReceived()
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Future<Stream<RemotePushMessage>> onNotificationOpenedApp() {
+  Stream<RemotePushMessage> onNotificationOpenedApp() {
     return plugins.length == 1
         ? plugins[0].onNotificationOpenedApp()
         : throw _pluginNotAddedException('Notifications');

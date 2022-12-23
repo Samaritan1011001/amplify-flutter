@@ -3,12 +3,13 @@ description: A new Flutter plugin project.
 version: 1.0.0-next.0
 
 environment:
-  sdk: '>=2.17.0 <3.0.0'
+  sdk: ">=2.17.0 <3.0.0"
   flutter: ">=3.0.0"
 
 dependencies:
   amplify_secure_storage: ^0.1.0
   amplify_core: ">=1.0.0-next.0 <1.0.0-next.1"
+  amplify_flutter: ">=1.0.0-next.1 <1.0.0-next.2"
   aws_common: ^0.2.0
   aws_signature_v4: ^0.2.0
   built_collection: ^5.0.0
@@ -21,10 +22,11 @@ dependencies:
   uuid: ^3.0.0
   device_info_plus: ^6.0.0
   package_info_plus: ^2.0.0
+  workmanager: ^0.5.1
   amplify_auth_cognito:
     path: ../../../auth/amplify_auth_cognito
   amplify_push_notification:
-    path: ../../amplify_push_notification
+    path: ../amplify_push_notification
 
 dev_dependencies:
   amplify_lints: ^2.0.0
@@ -34,4 +36,3 @@ dev_dependencies:
   built_value_generator: 8.4.1
   flutter_test:
     sdk: flutter
-

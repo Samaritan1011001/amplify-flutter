@@ -34,7 +34,7 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
   // }
 
   Future<PushPermissionRequestStatus> requestMessagingPermission(
-      {PushNotificationPermissionRequest? pushNotificationPermissionRequest}) {
+      {bool? alert = true, bool? badge = true, bool? sound = true}) {
     throw UnimplementedError(
         'requestMessagingPermission() has not been implemented');
   }
@@ -51,17 +51,17 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
     );
   }
 
-  Future<Stream<RemotePushMessage>> onForegroundNotificationReceived() {
+  Stream<RemotePushMessage> onForegroundNotificationReceived() {
     throw UnimplementedError(
         'requestMessagingPermission() has not been implemented');
   }
 
-  Future<Stream<RemotePushMessage>> onBackgroundNotificationReceived() {
+  Stream<RemotePushMessage> onBackgroundNotificationReceived() {
     throw UnimplementedError(
         'onBackgroundNotificationReceived() has not been implemented');
   }
 
-  Future<Stream<RemotePushMessage>> onNotificationOpenedApp() {
+  Stream<RemotePushMessage> onNotificationOpenedApp() {
     throw UnimplementedError(
         'onNotificationOpenedApp() has not been implemented');
   }

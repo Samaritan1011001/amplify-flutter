@@ -13,40 +13,119 @@
  * permissions and limitations under the License.
  */
 
-import '../notification_types.dart';
+class RemotePushMessage<T> {
+  String? messageId;
+  String? senderId;
+  DateTime? sentTime;
+  String? collapseKey;
 
-class RemotePushMessage {
-  final String messageId;
-  final String messageType;
-
-  RemotePushNotification? notification;
+  dynamic content;
   Map<String, dynamic>? data;
-  PinpointPayload? pinpointPayload;
-
-// iOS specific
-  final bool contentAvailable;
-  final bool mutableContent;
-
-// Determine which of these are needed
-// String senderId;
-// String category;
-// String from;
-// String collapseKey;
-// DateTime sentTime;
-// String threadId;
-// int ttl;
-
-// Taken from the current ios remote message payload
-// bool remoteNotificationCompleteCallbackCalled;
-// bool sound;
+  Map<String, dynamic>? metadata;
 
   RemotePushMessage({
-    this.messageId = 'default',
-    this.messageType = 'default',
-    // this.notification = RemotePushNotification(),
-    // this.data,
-    // this.pinpointPayload,
-    this.contentAvailable = false,
-    this.mutableContent = false,
+    this.messageId,
+    this.senderId,
+    this.sentTime,
+    this.collapseKey,
+    this.content,
+    this.data,
+    this.metadata,
+  });
+
+  // RemotePushMessage.fromJson(Map<String, dynamic> json)
+  //     : messageId = json['messageId'] as String,
+  //       // messageType = json['messageType'] as String,
+  //       // notification = json['notification'] as T,
+  //       data = json['data'] as Map<String, dynamic>
+
+  // TODO: Find common and required fields
+  RemotePushMessage.fromJson(Map<String, dynamic> json) {
+    messageId = cast<String>(json['messageId']);
+    senderId = cast<String>(json['senderId']);
+    sentTime = cast<DateTime>(json['sentTime']);
+    collapseKey = cast<String>(json['collapseKey']);
+    data = cast<Map<String, dynamic>>(json['data']);
+
+    if (json.containsKey('aps')) {
+      Map<String, dynamic> alert = json['aps']['alert'] as Map<String, dynamic>;
+      // PushNotificationMessageContent<ApnsPlatformOptions> specificContent =
+      content = PushNotificationMessageContent<ApnsPlatformOptions>(
+          title: alert['title'] as String,
+          body: alert['body'] as String,
+          platformOptions: ApnsPlatformOptions(
+              contentAvailable: json['aps']['content-available'] as int));
+    } else {
+      print('data out-> $data');
+
+      if (data != null) {
+        print('data in -> $data');
+        content = PushNotificationMessageContent<FcmPlatformOptions>(
+          title: data!['pinpoint.notification.title'] as String,
+          body: data!['pinpoint.notification.body'] as String,
+          platformOptions: FcmPlatformOptions(),
+        );
+      }
+      // Map<String, dynamic> alert = json['data']['alert'] as Map<String, dynamic>;
+      // // PushNotificationMessageContent<ApnsPlatformOptions> specificContent =
+      // content = PushNotificationMessageContent<ApnsPlatformOptions>(
+      //     title: alert['title'] as String,
+      //     body: alert['body'] as String,
+      //     platformOptions: ApnsPlatformOptions(
+      //         contentAvailable: json['aps']['content-available'] as int));
+
+    }
+
+    metadata = cast<Map<String, Object>>(json['metadata']);
+  }
+
+  U? cast<U>(dynamic x) => x is U ? x : null;
+}
+
+class PushNotificationMessageContent<T> {
+  String? title;
+  String? body;
+  String? imageUrl;
+  T? platformOptions;
+  PushNotificationMessageContent({
+    this.title,
+    this.body,
+    this.imageUrl,
+    this.platformOptions,
+  });
+  @override
+  String toString() {
+    return 'title : $title';
+  }
+}
+
+class FcmPlatformOptions {
+  String? channelId;
+  String? color;
+  String? smallIcon;
+  String? tag;
+  String? sound;
+  FcmPlatformOptions({
+    this.channelId,
+    this.color,
+    this.smallIcon,
+    this.sound,
+    this.tag,
+  });
+}
+
+class ApnsPlatformOptions {
+  String? subtitle;
+  int? contentAvailable;
+  int? mutableContent;
+  String? category;
+  String? threadId;
+
+  ApnsPlatformOptions({
+    this.subtitle,
+    this.contentAvailable,
+    this.mutableContent,
+    this.category,
+    this.threadId,
   });
 }

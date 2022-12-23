@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:amplify_push_notifications_pinpoint/amplify_push_notifications_pinpoint.dart';
-import 'amplifyconfiguration.dart';
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_push_notifications_pinpoint/amplify_push_notifications_pinpoint.dart';
+import 'package:flutter/material.dart';
+
+import 'amplifyconfiguration.dart';
 
 void main() {
   AmplifyLogger().logLevel = LogLevel.info;
@@ -17,10 +18,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  PushPermissionRequestStatus pushPermissionRequestStatus = PushPermissionRequestStatus.undetermined;
+  PushPermissionRequestStatus pushPermissionRequestStatus =
+      PushPermissionRequestStatus.undetermined;
   RemotePushMessage? foregroundMessage;
   RemotePushMessage? backgroundMessage;
   RemotePushMessage? notificationOpenedMessage;
+  String? token;
 
   // Platform messages are asynchronous, so we initialize in an async method.
   void _configureAmplify() async {
@@ -74,9 +77,8 @@ class _MyAppState extends State<MyApp> {
                 onPressed: () async {
                   try {
                     setState(() async {
-                      pushPermissionRequestStatus =
-                        await Amplify.Notifications
-                            .requestMessagingPermission();
+                      pushPermissionRequestStatus = await Amplify.Notifications
+                          .requestMessagingPermission();
                     });
                   } catch (e) {
                     print(e.toString());
@@ -110,13 +112,20 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    await Amplify.Notifications.onNewToken();
+                    final onNewTokenStream =
+                        await Amplify.Notifications.onNewToken();
+                    onNewTokenStream.listen((event) {
+                      setState(() {
+                        token = event;
+                      });
+                    });
                   } catch (e) {
                     print(e.toString());
                   }
                 },
                 child: const Text('onNewToken'),
               ),
+              Text(token == null ? "No token yet" : token!),
               TextButton(
                 onPressed: () async {
                   try {
@@ -131,7 +140,7 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    final foregroundStream = await Amplify.Notifications
+                    final foregroundStream = Amplify.Notifications
                         .onForegroundNotificationReceived();
                     foregroundStream.listen((event) {
                       setState(() {
@@ -146,13 +155,14 @@ class _MyAppState extends State<MyApp> {
               ),
               Text(foregroundMessage == null
                   ? "No foreground message yet"
-                  : foregroundMessage!.messageId),
+                  : (foregroundMessage!.messageId ?? '')),
               TextButton(
                 onPressed: () async {
                   try {
-                    final backgroundStream = await Amplify.Notifications
+                    final backgroundStream = Amplify.Notifications
                         .onBackgroundNotificationReceived();
                     backgroundStream.listen((event) {
+                      print("User listened background function called");
                       setState(() {
                         backgroundMessage = event;
                       });
@@ -163,14 +173,17 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text('onBackgroundNotificationReceived'),
               ),
+              // Text(backgroundMessage == null
+              //     ? "No background message yet"
+              //     : (backgroundMessage!.messageId ?? "")),
               Text(backgroundMessage == null
                   ? "No background message yet"
-                  : backgroundMessage!.messageId),
+                  : (backgroundMessage!.content.toString())),
 
               TextButton(
                 onPressed: () async {
                   try {
-                    await Amplify.Notifications.onNotificationOpenedApp();
+                    Amplify.Notifications.onNotificationOpenedApp();
                   } catch (e) {
                     print(e.toString());
                   }
@@ -179,11 +192,11 @@ class _MyAppState extends State<MyApp> {
               ),
               Text(notificationOpenedMessage == null
                   ? "No notification opened message yet"
-                  : notificationOpenedMessage!.messageId),
+                  : (notificationOpenedMessage!.messageId ?? "")),
               TextButton(
                 onPressed: () async {
                   try {
-                    await Amplify.Notifications.getInitialNotification();
+                    Amplify.Notifications.getInitialNotification();
                   } catch (e) {
                     print(e.toString());
                   }

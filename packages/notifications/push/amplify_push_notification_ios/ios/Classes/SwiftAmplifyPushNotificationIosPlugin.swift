@@ -11,6 +11,7 @@ extension Data {
     }
 }
 
+
 public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
  
     let channel:FlutterMethodChannel?;
@@ -22,7 +23,7 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "com.amazonaws.amplify/notifications_pinpoint", binaryMessenger: registrar.messenger())
 //      let newTokenChannel = FlutterEventChannel(name: "com.amazonaws.amplify/event_channel/notifications_pinpoint", binaryMessenger: registrar.messenger())
-      let instance = SwiftAmplifyPushNotificationsPinpointIosPlugin(channel:channel)
+      let instance = SwiftAmplifyPushNotificationIosPlugin(channel:channel)
     registrar.addMethodCallDelegate(instance, channel: channel)
 //      registrar.addMethodCallDelegate(instance, channel: newTokenChannel)
     registrar.addApplicationDelegate(instance)
@@ -101,7 +102,7 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
                    @escaping () -> Void) {
         
         print("received notificaiton on tap: \(response)")
-        self.channel?.invokeMethod("onNotificationOpenedApp",arguments: "notification");
+        self.channel?.invokeMethod("NOTIFICATION_OPENED_APP",arguments: "notification");
 
 
     completionHandler()
@@ -122,14 +123,22 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
         _ application: UIApplication,
         didReceiveRemoteNotification userInfo: [AnyHashable : Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) -> Bool {
+            let remoteMessage:String
+            do {
+                    let jsonData = try JSONSerialization.data(withJSONObject: userInfo)
+                remoteMessage = String(data: jsonData, encoding: .utf8) ?? ""
+                } catch {
+                    print("something went wrong with parsing json")
+                    return false
+                }
             if UIApplication.shared.applicationState == .active  {
-                self.channel?.invokeMethod("onForegroundNotificationReceived",arguments: "notification");
+                self.channel?.invokeMethod("FOREGROUND_MESSAGE_RECEIVED",arguments: remoteMessage);
     // Go do some UI stuff
             }else{
-                self.channel?.invokeMethod("onBackgroundNotificationReceived",arguments: "notification");
+                self.channel?.invokeMethod("BACKGROUND_MESSAGE_RECEIVED",arguments: remoteMessage);
+                print("received notificaiton in background: \(userInfo)")
 
             }
-        print("received notificaiton in background: \(userInfo)")
 
         completionHandler(.noData)
         return true
