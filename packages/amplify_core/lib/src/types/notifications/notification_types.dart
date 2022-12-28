@@ -22,4 +22,4 @@ export 'push_notifications/pinpoint_message_payload.dart';
 export 'push_notifications/remote_push_message.dart';
 export 'push_notifications/remote_push_noificaiton.dart';
 export 'push_notifications/service_provider_client.dart';
-
+export 'push_notifications/user_callback_type.dart';

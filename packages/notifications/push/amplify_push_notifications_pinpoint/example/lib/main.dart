@@ -2,8 +2,24 @@ import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_push_notifications_pinpoint/amplify_push_notifications_pinpoint.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'amplifyconfiguration.dart';
+
+@pragma('vm:entry-point')
+void userCallback() async {
+  print("user Given callback called");
+  try {
+    final prefs = await SharedPreferences.getInstance();
+
+    final int? userCallbackCalled = prefs.getInt('userCallbackCalled');
+
+    await prefs.setInt('userCallbackCalled',
+        userCallbackCalled != null ? (userCallbackCalled + 1) : 0);
+  } catch (e) {
+    print("Error when post call $e");
+  }
+}
 
 void main() {
   AmplifyLogger().logLevel = LogLevel.info;
@@ -55,6 +71,42 @@ class _MyAppState extends State<MyApp> {
         body: Center(
           child: ListView(
             children: [
+              TextButton(
+                onPressed: () async {
+                  try {
+                    final prefs = await SharedPreferences.getInstance();
+
+                    final int? userCallbackCalled =
+                        prefs.getInt('userCallbackCalled');
+
+                    print(" user callback read count -> $userCallbackCalled");
+                  } catch (e) {
+                    print("Error when get call $e");
+                  }
+                },
+                child: const Text('Check saved bool'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    print("User callback was called");
+
+                    final prefs = await SharedPreferences.getInstance();
+
+                    final int? userCallbackCalled =
+                        prefs.getInt('userCallbackCalled');
+
+                    await prefs.setInt(
+                        'userCallbackCalled',
+                        userCallbackCalled != null
+                            ? (userCallbackCalled + 1)
+                            : 0);
+                  } catch (e) {
+                    print("Error when post call $e");
+                  }
+                },
+                child: const Text('Save locally'),
+              ),
               const Text('Configuration APIs'),
               TextButton(
                 onPressed: () async {
@@ -159,14 +211,16 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    final backgroundStream = Amplify.Notifications
-                        .onBackgroundNotificationReceived();
-                    backgroundStream.listen((event) {
-                      print("User listened background function called");
-                      setState(() {
-                        backgroundMessage = event;
-                      });
-                    });
+                    // final backgroundStream = Amplify.Notifications
+                    //     .onBackgroundNotificationReceived();
+                    // backgroundStream.listen((event) {
+                    //   print("User listened background function called");
+                    //   setState(() {
+                    //     backgroundMessage = event;
+                    //   });
+                    // });
+                    Amplify.Notifications.onBackgroundNotificationReceived(
+                        userCallback);
                   } catch (e) {
                     print(e.toString());
                   }

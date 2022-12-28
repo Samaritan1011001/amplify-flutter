@@ -33,6 +33,8 @@ dependencies:
     path: ../../../../amplify/amplify_flutter
   amplify_auth_cognito:
     path: ../../../../auth/amplify_auth_cognito
+  http: ^0.13.5
+  shared_preferences: ^2.0.15
 
 dev_dependencies:
   flutter_test:

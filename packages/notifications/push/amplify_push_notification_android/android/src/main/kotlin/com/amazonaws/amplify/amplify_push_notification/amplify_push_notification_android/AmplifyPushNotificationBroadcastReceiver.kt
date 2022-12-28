@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.google.firebase.messaging.RemoteMessage
+import io.flutter.view.FlutterMain
 import org.json.JSONObject
 
 class PushNotificationReceiver : BroadcastReceiver() {
@@ -31,7 +32,11 @@ class PushNotificationReceiver : BroadcastReceiver() {
                     PushNotificationEventManager.sendEvent(
                         PushNotificationEventType.BACKGROUND_MESSAGE_RECEIVED, notificationDataJson
                     )
+
                     // TODO: Start a background headless service
+                    FlutterMain.startInitialization(context)
+                    FlutterMain.ensureInitializationComplete(context, null)
+                    PushNotificationBackgroundService.enqueueWork(context, intent)
 //                    val serviceIntent =
 //                        Intent(context, PushNotificationHeadlessTaskService::class.java)
 //                    serviceIntent.putExtras(remoteMessageBundle)

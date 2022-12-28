@@ -2,24 +2,26 @@ library amplify_push_notification;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:amplify_core/amplify_core.dart';
 // import 'package:amplify_push_notifications_pinpoint/endpoint_client.dart';
 // import 'package:amplify_push_notifications_pinpoint/src/impl/device_info_context_provider.dart';
 // import 'package:amplify_push_notifications_pinpoint/src/sdk/pinpoint.dart';
 import 'package:flutter/services.dart';
-import 'package:workmanager/workmanager.dart';
+
+import 'callback_dispatcher.dart';
 
 // import 'package:amplify_push_notifications_pinpoint/lib/sdk/pinpoint.dart';
 
-@pragma(
-    'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) {
-    print("Native called background task:"); //simpleTask will be emitted here.
-    return Future.value(true);
-  });
-}
+// @pragma(
+//     'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
+// void callbackDispatcher() {
+//   Workmanager().executeTask((task, inputData) {
+//     print("Native called background task:"); //simpleTask will be emitted here.
+//     return Future.value(true);
+//   });
+// }
 
 const MethodChannel _methodChannel =
     MethodChannel('com.amazonaws.amplify/notifications_pinpoint');
@@ -135,9 +137,10 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
         _logger.info("received notification in foreground listener $event");
       });
 
-      onBackgroundNotificationReceived().listen((event) {
-        _logger.info("received notification in background listener $event");
-      });
+      // onBackgroundNotificationReceived().listen((event) {
+      //   _logger.info("received notification in background listener $event");
+      // });
+
       onNotificationOpenedApp().listen((event) {});
 
       // Initialize Endpoint Client
@@ -150,12 +153,33 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     // Register with service provider
     await _registerDevice();
 
-    Workmanager().initialize(
-        callbackDispatcher, // The top level function, aka callbackDispatcher
-        isInDebugMode:
-            true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-        );
+    // Register the callback dispatcher
+    _registerCallbackDispatcher();
+
+    // Workmanager().initialize(
+    //     callbackDispatcher, // The top level function, aka callbackDispatcher
+    //     isInDebugMode:
+    //         true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+    //     );
+
     _isConfigured = true;
+  }
+
+  Future<void> _registerCallbackDispatcher() async {
+    _logger.info("_registerCallbackDispatcher");
+    final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
+    await _methodChannel.invokeMethod<void>(
+        'registerCallbackDispatcher', <dynamic>[callback?.toRawHandle()]);
+  }
+
+  Future<void> _registerUserGivenCallback(VoidCallback userCallback) async {
+    _logger.info("_registerUserGivenCallback");
+    final callback = PluginUtilities.getCallbackHandle(userCallback);
+    _logger.info(
+        "callback was registered in plugin cache ${callback?.toRawHandle()}");
+
+    await _methodChannel.invokeMethod(
+        'registerUserGivenCallback', <dynamic>[callback?.toRawHandle()]);
   }
 
   Future<void> _registerDevice({String? address}) async {
@@ -217,8 +241,9 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
       _foregroundEventStreamController.stream;
 
   @override
-  Stream<RemotePushMessage> onBackgroundNotificationReceived() =>
-      _backgroundEventStreamController.stream;
+  void onBackgroundNotificationReceived(VoidCallback callback) {
+    _registerUserGivenCallback(callback);
+  }
 
   @override
   Stream<RemotePushMessage> onNotificationOpenedApp() =>

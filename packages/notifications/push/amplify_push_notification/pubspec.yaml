@@ -23,6 +23,7 @@ dependencies:
   uuid: ^3.0.0
   amplify_auth_cognito: ^0.1.0
   workmanager: ^0.5.1
+  http: ^0.13.5
 
 dev_dependencies:
   amplify_lints: ^2.0.0

@@ -53,9 +53,9 @@ class NotificationsCategory
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Stream<RemotePushMessage> onBackgroundNotificationReceived() {
+  void onBackgroundNotificationReceived(VoidCallback callback) {
     return plugins.length == 1
-        ? plugins[0].onBackgroundNotificationReceived()
+        ? plugins[0].onBackgroundNotificationReceived(callback)
         : throw _pluginNotAddedException('Notifications');
   }
 
