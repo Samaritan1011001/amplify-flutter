@@ -26,7 +26,7 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
   private lateinit var channel: MethodChannel
   private var mainActivity: Activity? = null
   private lateinit var context: Context
-  private val LOG = Amplify.Logging.forNamespace("amplify:flutter:notifications_pinpoint")
+  private val LOG = Amplify.Logging.forNamespace("amplify:flutter:push_notification_plugin")
   private var isListeningToOnNewToken = false
 
   companion object {
@@ -86,7 +86,7 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
         LOG.info("onNewToken native method ")
         isListeningToOnNewToken = true
       }
-      "registerCallbackDispatcher" -> {
+      "initializeService" -> {
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 //          mActivity?.requestPermissions(REQUIRED_PERMISSIONS, 12312)
 //        }

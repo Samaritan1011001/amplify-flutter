@@ -37,12 +37,7 @@ class PushNotificationReceiver : BroadcastReceiver() {
                     FlutterMain.startInitialization(context)
                     FlutterMain.ensureInitializationComplete(context, null)
                     PushNotificationBackgroundService.enqueueWork(context, intent)
-//                    val serviceIntent =
-//                        Intent(context, PushNotificationHeadlessTaskService::class.java)
-//                    serviceIntent.putExtras(remoteMessageBundle)
-//                    if (context.startService(serviceIntent) != null) {
-//                        HeadlessJsTaskService.acquireWakeLockNow(context)
-//                    }
+
                 } catch (exception: Exception) {
                     Log.e(TAG, "Something went wrong while starting headless task")
                 }

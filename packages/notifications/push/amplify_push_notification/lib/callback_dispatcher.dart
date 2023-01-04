@@ -6,10 +6,10 @@ import 'package:flutter/services.dart';
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   print("callbackDispatcher was called");
+
+  WidgetsFlutterBinding.ensureInitialized();
   const MethodChannel backgroundChannel = MethodChannel(
       'plugins.flutter.io/amplify_push_notification_plugin_background');
-  WidgetsFlutterBinding.ensureInitialized();
-
   backgroundChannel.setMethodCallHandler((MethodCall call) async {
     final List<dynamic> args = call.arguments;
     final Function? callback = PluginUtilities.getCallbackFromHandle(

@@ -24,7 +24,7 @@ import 'callback_dispatcher.dart';
 // }
 
 const MethodChannel _methodChannel =
-    MethodChannel('com.amazonaws.amplify/notifications_pinpoint');
+    MethodChannel('com.amazonaws.amplify/push_notification_plugin');
 
 class AmplifyPushNotification extends NotificationsPluginInterface {
   AmplifyPushNotification({this.serviceProviderClient});
@@ -43,6 +43,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   final StreamController<RemotePushMessage>
       _notificationOpenedStreamController =
       StreamController<RemotePushMessage>.broadcast();
+
+  late final VoidCallback userGivenCallback;
 
   bool _isConfigured = false;
 
@@ -88,6 +90,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
         try {
           final jData = jsonDecode(methodCall.arguments);
           print("BackgroundMessageReceived data -> $jData");
+          userGivenCallback();
           _backgroundEventStreamController.sink
               .add(RemotePushMessage.fromJson(jData));
           // Workmanager().registerOneOffTask("task-identifier", "simpleTask");
@@ -169,7 +172,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     _logger.info("_registerCallbackDispatcher");
     final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
     await _methodChannel.invokeMethod<void>(
-        'registerCallbackDispatcher', <dynamic>[callback?.toRawHandle()]);
+        'initializeService', <dynamic>[callback?.toRawHandle()]);
   }
 
   Future<void> _registerUserGivenCallback(VoidCallback userCallback) async {
@@ -242,7 +245,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
 
   @override
   void onBackgroundNotificationReceived(VoidCallback callback) {
-    _registerUserGivenCallback(callback);
+    userGivenCallback = callback;
+    // _registerUserGivenCallback(callback);
   }
 
   @override

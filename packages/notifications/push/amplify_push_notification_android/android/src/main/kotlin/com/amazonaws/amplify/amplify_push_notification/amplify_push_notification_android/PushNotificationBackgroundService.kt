@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.util.Log
-import androidx.annotation.NonNull
 import androidx.core.app.JobIntentService
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -48,7 +47,7 @@ class PushNotificationBackgroundService : MethodChannel.MethodCallHandler, JobIn
     }
 
     @SuppressLint("LongLogTag")
-    private fun startGeofencingService(context: Context) {
+    private fun startPushNotificationService(context: Context) {
         synchronized(sServiceStarted) {
             mContext = context
             if (sBackgroundFlutterEngine == null) {
@@ -128,7 +127,7 @@ class PushNotificationBackgroundService : MethodChannel.MethodCallHandler, JobIn
     }
     override fun onCreate() {
         super.onCreate()
-        startGeofencingService(this)
+        startPushNotificationService(this)
     }
 
 }
