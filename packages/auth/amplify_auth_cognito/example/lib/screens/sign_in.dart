@@ -30,10 +30,10 @@ class SignInWidget extends StatefulWidget {
 
   final void Function(String) showResult;
   final void Function(String) changeDisplay;
-  final VoidCallback showCreateUser;
-  final VoidCallback signOut;
-  final VoidCallback fetchSession;
-  final VoidCallback getCurrentUser;
+  final RemoteMessageCallback showCreateUser;
+  final RemoteMessageCallback signOut;
+  final RemoteMessageCallback fetchSession;
+  final RemoteMessageCallback getCurrentUser;
   final void Function(Object?) setError;
 
   @override

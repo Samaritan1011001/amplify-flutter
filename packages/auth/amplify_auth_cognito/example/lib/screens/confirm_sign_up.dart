@@ -28,7 +28,7 @@ class ConfirmSignUpWidget extends StatefulWidget {
   final void Function(String) showResult;
   final void Function(String) changeDisplay;
   final void Function(Object?) setError;
-  final VoidCallback backToSignIn;
+  final RemoteMessageCallback backToSignIn;
 
   @override
   State<ConfirmSignUpWidget> createState() => _ConfirmSignUpWidgetState();

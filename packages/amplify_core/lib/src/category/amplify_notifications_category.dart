@@ -53,7 +53,7 @@ class NotificationsCategory
         : throw _pluginNotAddedException('Notifications');
   }
 
-  void onBackgroundNotificationReceived(VoidCallback callback) {
+  void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
     return plugins.length == 1
         ? plugins[0].onBackgroundNotificationReceived(callback)
         : throw _pluginNotAddedException('Notifications');

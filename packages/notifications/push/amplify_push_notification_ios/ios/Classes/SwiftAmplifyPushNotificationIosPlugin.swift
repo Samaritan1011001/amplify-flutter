@@ -3,6 +3,7 @@ import UIKit
 import Amplify
 import amplify_flutter_ios
 import Foundation
+import AmplifyUtilsNotifications
 
 extension Data {
     var hexString: String {

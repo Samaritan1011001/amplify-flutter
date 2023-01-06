@@ -38,41 +38,17 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   final StreamController<String> _newTokenStream = StreamController<String>();
   final StreamController<RemotePushMessage> _foregroundEventStreamController =
       StreamController<RemotePushMessage>.broadcast();
-  final StreamController<RemotePushMessage> _backgroundEventStreamController =
-      StreamController<RemotePushMessage>.broadcast();
   final StreamController<RemotePushMessage>
       _notificationOpenedStreamController =
       StreamController<RemotePushMessage>.broadcast();
 
-  late final VoidCallback userGivenCallback;
+  RemoteMessageCallback? userGivenCallback;
 
   bool _isConfigured = false;
 
   Future<dynamic> nativeMethodCallHandler(MethodCall methodCall) async {
     print('Native call!');
     switch (methodCall.method) {
-      // case "onForegroundNotificationReceived":
-      //   print("onForegroundNotificationReceived");
-      //   // _foregroundEventStreamController.add(RemotePushMessage());
-      //   break;
-      // case "onBackgroundNotificationReceived":
-      //   print("onBackgroundNotificationReceived");
-      //   // _backgroundEventStreamController.add(RemotePushMessage());
-      //   break;
-      // case "onNotificationOpenedApp":
-      //   print("onNotificationOpenedApp");
-      //   // _notificationOpenedStreamController.add(RemotePushMessage());
-      //   break;
-      // case "onNewToken":
-      //   print("onNewToken");
-      //   _newTokenStream.add("token");
-      //   break;
-      // case "RTNPushNotification_NewToken":
-      //   print("Android onNewToken");
-      //   final jData = jsonDecode(methodCall.arguments);
-      //   print("Android onNewToken data -> $jData");
-      //   _newTokenStream.add(jData);
-      //   break;
       case "FOREGROUND_MESSAGE_RECEIVED":
         try {
           final jData = jsonDecode(methodCall.arguments);
@@ -90,10 +66,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
         try {
           final jData = jsonDecode(methodCall.arguments);
           print("BackgroundMessageReceived data -> $jData");
-          userGivenCallback();
-          _backgroundEventStreamController.sink
-              .add(RemotePushMessage.fromJson(jData));
-          // Workmanager().registerOneOffTask("task-identifier", "simpleTask");
+          userGivenCallback!(RemotePushMessage.fromJson(jData));
         } catch (e) {
           _logger.info("Error $e");
         }
@@ -137,7 +110,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
       onForegroundNotificationReceived().listen((event) {
         // AppleNotification notif = event.notification as AppleNotification;
 
-        _logger.info("received notification in foreground listener $event");
+        _logger.info(
+            "received notification in foreground listener ${event.content}");
       });
 
       // onBackgroundNotificationReceived().listen((event) {
@@ -157,7 +131,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     await _registerDevice();
 
     // Register the callback dispatcher
-    _registerCallbackDispatcher();
+    // _registerCallbackDispatcher();
 
     // Workmanager().initialize(
     //     callbackDispatcher, // The top level function, aka callbackDispatcher
@@ -175,7 +149,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
         'initializeService', <dynamic>[callback?.toRawHandle()]);
   }
 
-  Future<void> _registerUserGivenCallback(VoidCallback userCallback) async {
+  Future<void> _registerUserGivenCallback(
+      RemoteMessageCallback userCallback) async {
     _logger.info("_registerUserGivenCallback");
     final callback = PluginUtilities.getCallbackHandle(userCallback);
     _logger.info(
@@ -244,7 +219,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
       _foregroundEventStreamController.stream;
 
   @override
-  void onBackgroundNotificationReceived(VoidCallback callback) {
+  void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
     userGivenCallback = callback;
     // _registerUserGivenCallback(callback);
   }

@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'amplifyconfiguration.dart';
 
 @pragma('vm:entry-point')
-void userCallback() async {
+void userCallback(RemotePushMessage remotePushMessage) async {
   print("user Given callback called");
   try {
     final prefs = await SharedPreferences.getInstance();

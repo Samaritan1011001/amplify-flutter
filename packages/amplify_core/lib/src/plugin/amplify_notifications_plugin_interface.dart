@@ -56,7 +56,7 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
         'requestMessagingPermission() has not been implemented');
   }
 
-  void onBackgroundNotificationReceived(VoidCallback callback) {
+  void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
     throw UnimplementedError(
         'onBackgroundNotificationReceived() has not been implemented');
   }

@@ -13,13 +13,13 @@
  * permissions and limitations under the License.
  */
 
-class RemotePushMessage<T> {
+class RemotePushMessage {
   String? messageId;
   String? senderId;
   DateTime? sentTime;
   String? collapseKey;
 
-  dynamic content;
+  PushNotificationMessageContent? content;
   Map<String, dynamic>? data;
   Map<String, dynamic>? metadata;
 
@@ -33,12 +33,6 @@ class RemotePushMessage<T> {
     this.metadata,
   });
 
-  // RemotePushMessage.fromJson(Map<String, dynamic> json)
-  //     : messageId = json['messageId'] as String,
-  //       // messageType = json['messageType'] as String,
-  //       // notification = json['notification'] as T,
-  //       data = json['data'] as Map<String, dynamic>
-
   // TODO: Find common and required fields
   RemotePushMessage.fromJson(Map<String, dynamic> json) {
     messageId = cast<String>(json['messageId']);
@@ -49,31 +43,20 @@ class RemotePushMessage<T> {
 
     if (json.containsKey('aps')) {
       Map<String, dynamic> alert = json['aps']['alert'] as Map<String, dynamic>;
-      // PushNotificationMessageContent<ApnsPlatformOptions> specificContent =
       content = PushNotificationMessageContent<ApnsPlatformOptions>(
-          title: alert['title'] as String,
-          body: alert['body'] as String,
-          platformOptions: ApnsPlatformOptions(
-              contentAvailable: json['aps']['content-available'] as int));
-    } else {
-      print('data out-> $data');
-
-      if (data != null) {
-        print('data in -> $data');
-        content = PushNotificationMessageContent<FcmPlatformOptions>(
-          title: data!['pinpoint.notification.title'] as String,
-          body: data!['pinpoint.notification.body'] as String,
-          platformOptions: FcmPlatformOptions(),
-        );
-      }
-      // Map<String, dynamic> alert = json['data']['alert'] as Map<String, dynamic>;
-      // // PushNotificationMessageContent<ApnsPlatformOptions> specificContent =
-      // content = PushNotificationMessageContent<ApnsPlatformOptions>(
-      //     title: alert['title'] as String,
-      //     body: alert['body'] as String,
-      //     platformOptions: ApnsPlatformOptions(
-      //         contentAvailable: json['aps']['content-available'] as int));
-
+        title: alert['title'] as String,
+        body: alert['body'] as String,
+        platformOptions: ApnsPlatformOptions(
+          contentAvailable: json['aps']['content-available'] as int,
+        ),
+      );
+    } else if (data != null) {
+      print('data in -> $data');
+      content = PushNotificationMessageContent<FcmPlatformOptions>(
+        title: data!['pinpoint.notification.title'] as String,
+        body: data!['pinpoint.notification.body'] as String,
+        platformOptions: FcmPlatformOptions(),
+      );
     }
 
     metadata = cast<Map<String, Object>>(json['metadata']);

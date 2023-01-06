@@ -31,8 +31,13 @@ flutter_ios_podfile_setup
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
-
+  pod 'AmplifyUtilsNotifications', :git => 'git@github.com:aws-amplify/amplify-swift-utils-notifications.git', :branch => 'main'
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+end
+
+target 'NotificationService' do
+  use_frameworks!
+  pod 'AmplifyUtilsNotifications', :git => 'git@github.com:aws-amplify/amplify-swift-utils-notifications.git', :branch => 'main'
 end
 
 post_install do |installer|

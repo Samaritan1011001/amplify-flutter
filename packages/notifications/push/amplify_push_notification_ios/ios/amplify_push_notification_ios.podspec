@@ -17,6 +17,7 @@ A new Flutter plugin project.
   s.dependency 'Flutter'
   s.dependency 'Amplify', '1.28.3'
   s.dependency 'amplify_flutter_ios'
+  s.dependency 'AmplifyUtilsNotifications'
   s.platform = :ios, '13.0'
 
   # Flutter.framework does not contain a i386 slice.
