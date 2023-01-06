@@ -19,9 +19,10 @@ class PushNotificationReceiver : BroadcastReceiver() {
             val remoteMessageBundle = getBundleFromRemoteMessage(remoteMessage)
             val lifecycle = ProcessLifecycleOwner.get().lifecycle
             if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-                Log.d(TAG, "Send foreground message received event")
                 // TODO: Convert bundle to object and send back to dart
                 val notificationDataJson = convertBundleToJson(remoteMessageBundle)
+                Log.d(TAG, "Send foreground message received event: $notificationDataJson")
+
                 PushNotificationEventManager.sendEvent(
                     PushNotificationEventType.FOREGROUND_MESSAGE_RECEIVED, notificationDataJson
                 )

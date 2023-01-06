@@ -110,7 +110,7 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
 
     channel = MethodChannel(
       flutterPluginBinding.binaryMessenger,
-      "com.amazonaws.amplify/notifications_pinpoint"
+      "com.amazonaws.amplify/push_notification_plugin"
     )
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext

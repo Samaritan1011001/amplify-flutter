@@ -131,7 +131,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     await _registerDevice();
 
     // Register the callback dispatcher
-    // _registerCallbackDispatcher();
+    _registerCallbackDispatcher();
 
     // Workmanager().initialize(
     //     callbackDispatcher, // The top level function, aka callbackDispatcher
@@ -220,8 +220,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
 
   @override
   void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
-    userGivenCallback = callback;
-    // _registerUserGivenCallback(callback);
+    // userGivenCallback = callback;
+    _registerUserGivenCallback(callback);
   }
 
   @override

@@ -207,7 +207,7 @@ class _MyAppState extends State<MyApp> {
               ),
               Text(foregroundMessage == null
                   ? "No foreground message yet"
-                  : (foregroundMessage!.messageId ?? '')),
+                  : (foregroundMessage.toString())),
               TextButton(
                 onPressed: () async {
                   try {
