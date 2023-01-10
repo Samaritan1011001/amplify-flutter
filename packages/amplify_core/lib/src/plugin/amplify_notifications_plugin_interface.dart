@@ -61,7 +61,7 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
         'onBackgroundNotificationReceived() has not been implemented');
   }
 
-  Stream<RemotePushMessage> onNotificationOpenedApp() {
+  void onNotificationOpenedApp(RemoteMessageCallback callback) {
     throw UnimplementedError(
         'onNotificationOpenedApp() has not been implemented');
   }

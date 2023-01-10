@@ -59,9 +59,9 @@ class NotificationsCategory
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Stream<RemotePushMessage> onNotificationOpenedApp() {
+  void onNotificationOpenedApp(RemoteMessageCallback callback) {
     return plugins.length == 1
-        ? plugins[0].onNotificationOpenedApp()
+        ? plugins[0].onNotificationOpenedApp(callback)
         : throw _pluginNotAddedException('Notifications');
   }
 

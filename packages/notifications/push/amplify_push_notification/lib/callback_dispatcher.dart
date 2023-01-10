@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:amplify_core/amplify_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -16,8 +17,9 @@ void callbackDispatcher() {
         CallbackHandle.fromRawHandle(args[0]));
     assert(callback != null);
 
+    print("user callback is being invoked");
     // TODO: Pass the notification from the broadcast receiver to here
-    callback!();
+    callback!(RemotePushMessage());
   });
   print("callbackDispatcher was initialized");
 

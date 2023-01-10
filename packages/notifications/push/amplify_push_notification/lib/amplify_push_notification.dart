@@ -42,7 +42,11 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
       _notificationOpenedStreamController =
       StreamController<RemotePushMessage>.broadcast();
 
-  RemoteMessageCallback? userGivenCallback;
+  RemoteMessageCallback? bgUserGivenCallback;
+  RemoteMessageCallback? appOpeningUserGivenCallback;
+
+  String BG_USER_CALLBACK_ID = "bg_user_given_callback";
+  String APP_OPNENING_USER_CALLBACK_ID = "app_opening_user_given_callback";
 
   bool _isConfigured = false;
 
@@ -66,7 +70,17 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
         try {
           final jData = jsonDecode(methodCall.arguments);
           print("BackgroundMessageReceived data -> $jData");
-          userGivenCallback!(RemotePushMessage.fromJson(jData));
+          // bgUserGivenCallback!(RemotePushMessage.fromJson(jData));
+        } catch (e) {
+          _logger.info("Error $e");
+        }
+        break;
+      case "NOTIFICATION_OPENED_APP":
+        try {
+          final jData = jsonDecode(methodCall.arguments);
+          print("NOTIFICATION_OPENED_APP data -> $jData");
+
+          // appOpeningUserGivenCallback!(RemotePushMessage.fromJson(jData));
         } catch (e) {
           _logger.info("Error $e");
         }
@@ -118,7 +132,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
       //   _logger.info("received notification in background listener $event");
       // });
 
-      onNotificationOpenedApp().listen((event) {});
+      // onNotificationOpenedApp().listen((event) {});
 
       // Initialize Endpoint Client
       await serviceProviderClient?.init(
@@ -150,14 +164,17 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   }
 
   Future<void> _registerUserGivenCallback(
-      RemoteMessageCallback userCallback) async {
+      String callbackId, RemoteMessageCallback userCallback) async {
     _logger.info("_registerUserGivenCallback");
     final callback = PluginUtilities.getCallbackHandle(userCallback);
     _logger.info(
         "callback was registered in plugin cache ${callback?.toRawHandle()}");
 
     await _methodChannel.invokeMethod(
-        'registerUserGivenCallback', <dynamic>[callback?.toRawHandle()]);
+        callbackId == BG_USER_CALLBACK_ID
+            ? 'registerBGUserGivenCallback'
+            : 'registerAppOpeningUserGivenCallback',
+        <dynamic>[callback?.toRawHandle()]);
   }
 
   Future<void> _registerDevice({String? address}) async {
@@ -220,13 +237,17 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
 
   @override
   void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
-    // userGivenCallback = callback;
-    _registerUserGivenCallback(callback);
+    bgUserGivenCallback = callback;
+    _registerUserGivenCallback(BG_USER_CALLBACK_ID, callback);
   }
 
   @override
-  Stream<RemotePushMessage> onNotificationOpenedApp() =>
-      _notificationOpenedStreamController.stream;
+  void onNotificationOpenedApp(RemoteMessageCallback callback) {
+    appOpeningUserGivenCallback = callback;
+    _registerUserGivenCallback(APP_OPNENING_USER_CALLBACK_ID, callback);
+
+    // return _notificationOpenedStreamController.stream;
+  }
 
   @override
   Future<RemotePushMessage> getInitialNotification() async {

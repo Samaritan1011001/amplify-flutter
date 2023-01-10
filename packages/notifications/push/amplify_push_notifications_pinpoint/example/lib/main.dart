@@ -21,6 +21,22 @@ void userCallback(RemotePushMessage remotePushMessage) async {
   }
 }
 
+@pragma('vm:entry-point')
+void onNotificationOpenedCallback(RemotePushMessage remotePushMessage) async {
+  print("onNotificationOpenedCallback called");
+  try {
+    final prefs = await SharedPreferences.getInstance();
+
+    final int? userCallbackCalled =
+        prefs.getInt('onNotificationOpenedCallback');
+
+    await prefs.setInt('onNotificationOpenedCallback',
+        userCallbackCalled != null ? (userCallbackCalled + 1) : 0);
+  } catch (e) {
+    print("Error when post call $e");
+  }
+}
+
 void main() {
   AmplifyLogger().logLevel = LogLevel.info;
   runApp(const MyApp());
@@ -40,6 +56,8 @@ class _MyAppState extends State<MyApp> {
   RemotePushMessage? backgroundMessage;
   RemotePushMessage? notificationOpenedMessage;
   String? token;
+  String key = "userCallbackCalled";
+  // String key = "onNotificationOpenedCallback";
 
   // Platform messages are asynchronous, so we initialize in an async method.
   void _configureAmplify() async {
@@ -76,8 +94,7 @@ class _MyAppState extends State<MyApp> {
                   try {
                     final prefs = await SharedPreferences.getInstance();
 
-                    final int? userCallbackCalled =
-                        prefs.getInt('userCallbackCalled');
+                    final int? userCallbackCalled = prefs.getInt(key);
 
                     print(" user callback read count -> $userCallbackCalled");
                   } catch (e) {
@@ -89,18 +106,13 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    print("User callback was called");
+                    print("Save locally");
 
                     final prefs = await SharedPreferences.getInstance();
 
-                    final int? userCallbackCalled =
-                        prefs.getInt('userCallbackCalled');
+                    final int? val = prefs.getInt(key);
 
-                    await prefs.setInt(
-                        'userCallbackCalled',
-                        userCallbackCalled != null
-                            ? (userCallbackCalled + 1)
-                            : 0);
+                    await prefs.setInt(key, val != null ? (val + 1) : 0);
                   } catch (e) {
                     print("Error when post call $e");
                   }
@@ -237,7 +249,15 @@ class _MyAppState extends State<MyApp> {
               TextButton(
                 onPressed: () async {
                   try {
-                    Amplify.Notifications.onNotificationOpenedApp();
+                    Amplify.Notifications.onNotificationOpenedApp(
+                        onNotificationOpenedCallback);
+                    // final onNotificationOpened =
+                    //     Amplify.Notifications.onNotificationOpenedApp();
+                    // onNotificationOpened.listen((event) {
+                    //   setState(() {
+                    //     notificationOpenedMessage = event;
+                    //   });
+                    // });
                   } catch (e) {
                     print(e.toString());
                   }
@@ -246,7 +266,7 @@ class _MyAppState extends State<MyApp> {
               ),
               Text(notificationOpenedMessage == null
                   ? "No notification opened message yet"
-                  : (notificationOpenedMessage!.messageId ?? "")),
+                  : (notificationOpenedMessage.toString())),
               TextButton(
                 onPressed: () async {
                   try {

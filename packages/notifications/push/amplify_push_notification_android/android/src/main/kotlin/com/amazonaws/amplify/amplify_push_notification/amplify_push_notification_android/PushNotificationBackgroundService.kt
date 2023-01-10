@@ -102,11 +102,13 @@ class PushNotificationBackgroundService : MethodChannel.MethodCallHandler, JobIn
     override fun onHandleWork(intent: Intent) {
 //        val callbackHandle = intent.getLongExtra(AmplifyPushNotificationAndroidPlugin.CALLBACK_HANDLE_KEY, 0)
 //        val geofencingEvent = GeofencingEvent.fromIntent(intent)
-
+        Log.i(TAG, "Handling work @ PushNotificationBackgroundService...")
+        val appOpenedThroughTap = intent.getBooleanExtra("appOpenedThroughTap", false)
+        val callbackKey = if (appOpenedThroughTap) AmplifyPushNotificationAndroidPlugin.APP_OPENING_USER_CALLBACK_HANDLE_KEY else AmplifyPushNotificationAndroidPlugin.BG_USER_CALLBACK_HANDLE_KEY
         val callbackHandle = mContext.getSharedPreferences(
             AmplifyPushNotificationAndroidPlugin.SHARED_PREFERENCES_KEY,
             Context.MODE_PRIVATE)
-            .getLong(AmplifyPushNotificationAndroidPlugin.CALLBACK_HANDLE_KEY, 0)
+            .getLong(callbackKey, 0)
         if (callbackHandle == 0L) {
             Log.e(TAG, "Fatal: no user callback registered")
             return

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.util.Log
 import androidx.annotation.NonNull
 import com.amazonaws.amplify.AtomicResult
-//import com.amazonaws.amplify.amplify_push_notification.amplify_push_notification_android.PermissionActivity
 import com.amplifyframework.core.Amplify
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
@@ -18,16 +17,18 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import org.json.JSONObject
 
 /** AmplifyPushNotificationAndroidPlugin */
-class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, MethodCallHandler, FirebaseMessagingService() {
+class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, MethodCallHandler, FirebaseMessagingService(), PluginRegistry.NewIntentListener {
 
   private lateinit var channel: MethodChannel
   private var mainActivity: Activity? = null
   private lateinit var context: Context
   private val LOG = Amplify.Logging.forNamespace("amplify:flutter:push_notification_plugin")
   private var isListeningToOnNewToken = false
+  private var activityBinding: ActivityPluginBinding? = null
 
   companion object {
     @JvmStatic
@@ -37,10 +38,14 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
     val SHARED_PREFERENCES_KEY = "amplify_push_notification_plugin_cache"
 
     @JvmStatic
-    val CALLBACK_HANDLE_KEY = "callback_handle"
+    val BG_USER_CALLBACK_HANDLE_KEY = "callback_handle"
+
+    @JvmStatic
+    val APP_OPENING_USER_CALLBACK_HANDLE_KEY = "callback_handle"
 
     @JvmStatic
     val CALLBACK_DISPATCHER_HANDLE_KEY = "callback_dispatch_handler"
+
 
     @JvmStatic
     private fun registerCallbackToCache(context: Context, args: ArrayList<*>?, callbackKey: String) {
@@ -53,6 +58,8 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
     }
 
   }
+
+
 
   // Handle methods received via MethodChannel
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull _result: Result) {
@@ -96,14 +103,45 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
         registerCallbackToCache(context, args, CALLBACK_DISPATCHER_HANDLE_KEY)
         result.success(true)
       }
-      "registerUserGivenCallback" -> {
+      "registerBGUserGivenCallback" -> {
         val args = call.arguments<ArrayList<*>>()
-        registerCallbackToCache(context, args, CALLBACK_HANDLE_KEY)
+        registerCallbackToCache(context, args, BG_USER_CALLBACK_HANDLE_KEY)
+      }
+      "registerAppOpeningUserGivenCallback" -> {
+        val args = call.arguments<ArrayList<*>>()
+        registerCallbackToCache(context, args, APP_OPENING_USER_CALLBACK_HANDLE_KEY)
       }
       else -> result.notImplemented()
     }
   }
 
+  override fun onNewIntent(intent: Intent): Boolean {
+    return try {
+      Log.d(TAG, "onNewIntent in push plugin $intent")
+      val spInstance = context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
+      var counter = spInstance.getInt("notificationTappedCounter", 0)
+      Log.d(TAG, "counter in onNewIntent $counter")
+
+      val editor = spInstance.edit()
+      editor.putInt("notificationTappedCounter", ++counter).apply()
+      val remoteMessageBundle = intent.extras
+      if(remoteMessageBundle != null) {
+        val notificationDataJson = convertBundleToJson(remoteMessageBundle)
+        Log.d(
+          TAG,
+          "Send onNotificationOpened message received event: $notificationDataJson"
+        )
+        PushNotificationEventManager.sendEvent(
+          PushNotificationEventType.NOTIFICATION_OPENED_APP, notificationDataJson
+        )
+      }
+
+      true
+    }catch (e: java.lang.Exception){
+      Log.e(TAG, "error in onNewIntent $e")
+      false
+    }
+  }
   override fun onAttachedToEngine(
     @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
   ) {
@@ -115,6 +153,11 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
     PushNotificationEventManager.initializeWithMethodChannel(channel)
+
+
+    val spInstance = context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
+    var counter = spInstance.getInt("notificationTappedCounter", -1)
+    Log.d(TAG, "notificationTappedCounter on app launch $counter")
   }
     /**
      * Called if the FCM registration token is updated. This may occur if the security of
@@ -133,10 +176,29 @@ class AmplifyPushNotificationAndroidPlugin: FlutterPlugin, ActivityAware, Method
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+      Log.d(TAG,"attached to activity $binding")
+      binding.addOnNewIntentListener(this)
       this.mainActivity = binding.activity
+
+      val appOpeningIntent = binding.activity.intent
+      val appOpenedThroughTap = appOpeningIntent.getBooleanExtra("appOpenedThroughTap", false)
+      Log.d(TAG,"appOpenedThroughTap $appOpenedThroughTap")
+
+      if(appOpenedThroughTap && context!=null){
+        val spInstance = context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
+        var counter = spInstance.getInt("notificationTappedCounter", 0)
+        Log.d(TAG, "counter in onAttachedToActivity $counter")
+
+        val editor = spInstance.edit()
+        editor.putInt("notificationTappedCounter", ++counter).apply()
+        PushNotificationBackgroundService.enqueueWork(context, appOpeningIntent)
+      }
+      activityBinding = binding
     }
 
     override fun onDetachedFromActivity() {
+//      activityBinding?.removeOnNewIntentListener(this)
+//      activityBinding = null
       this.mainActivity = null
     }
 
