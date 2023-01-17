@@ -1,6 +1,5 @@
 import UIKit
 import Flutter
-import amplify_push_notification_ios;
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
@@ -9,11 +8,8 @@ import amplify_push_notification_ios;
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        print("AppDelegate is called")
         GeneratedPluginRegistrant.register(with: self)
-        SwiftAmplifyPushNotificationIosPlugin.setPluginRegistrantCallback {
-        (registry) -> () in
-            GeneratedPluginRegistrant.register(with: registry)
-        }
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
     

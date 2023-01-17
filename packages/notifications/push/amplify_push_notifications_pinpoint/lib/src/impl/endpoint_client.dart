@@ -67,13 +67,11 @@ class EndpointClient {
       );
     }
 
-    _logger.info("savedFixedEndpointId -> $savedFixedEndpointId");
-
     final globalFieldsManager =
         await EndpointGlobalFieldsManager.getInstance(keyValueStore);
     final channelType = deviceContextInfo?.platform == DevicePlatform.iOS
-          ? ChannelType.apnsSandbox
-          : ChannelType.gcm;
+        ? ChannelType.apnsSandbox
+        : ChannelType.gcm;
     final endpointBuilder = PublicEndpointBuilder()
       ..address = deviceToken
       ..channelType = channelType
@@ -98,7 +96,6 @@ class EndpointClient {
       globalFieldsManager,
       endpointBuilder,
     );
-    _logger.info("_instance -> $_instance");
 
     return _instance!;
   }
@@ -217,11 +214,8 @@ class EndpointClient {
   /// Send local Endpoint instance to AWS Pinpoint
   Future<void> updateEndpoint() async {
     try {
-      _logger.info(" IN Update endpoint result ");
       final endpointReq = _endpointToRequest(getPublicEndpoint());
-      _logger.info("_appId -> $_appId");
       _logger.info("_fixedEndpointId -> $_fixedEndpointId");
-      _logger.info("endpointReq -> $endpointReq");
 
       final res = await _pinpointClient
           .updateEndpoint(
@@ -232,7 +226,6 @@ class EndpointClient {
             ),
           )
           .result;
-      _logger.info("Update endpoint result -> $res");
     } catch (error) {
       _logger.error('updateEndpoint - exception encountered: $error');
       rethrow;

@@ -4,9 +4,12 @@ import 'package:amplify_core/amplify_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// CallbackDispatcher is a standalone function that must reside in the gloabal scope with the vm:entry-point annotation. It has the following responsibilities,
+/// 1. Initialize a background channel that is used to communicate with the Dart isolate
+/// 2. Make sure Flutter Widget binding are available through WidgetsFlutterBinding.ensureInitialized()
 @pragma('vm:entry-point')
 void callbackDispatcher() {
-  print("callbackDispatcher was called");
+  print("CallbackDispatcher was called");
 
   WidgetsFlutterBinding.ensureInitialized();
   const MethodChannel backgroundChannel = MethodChannel(
@@ -17,33 +20,12 @@ void callbackDispatcher() {
         CallbackHandle.fromRawHandle(args[0]));
     assert(callback != null);
 
-    print("user callback is being invoked");
-    // TODO: Pass the notification from the broadcast receiver to here
+    // print("user callback is being invoked");
+    // TODO: Pass along the notification from the broadcast receiver
     callback!(RemotePushMessage());
   });
-  print("callbackDispatcher was initialized");
+  print("CallbackDispatcher was initialized");
 
   backgroundChannel
       .invokeMethod('PushNotificationBackgroundService.initialized');
 }
-
-// void userCallback() {
-//   try {
-//     print("User callback was called");
-
-//     // var url = Uri.https('jsonplaceholder.typicode.com', '/posts');
-//     // final response = await http.post(
-//     //   url,
-//     //   body: {
-//     //     'title': 'created when app is killed by bg task',
-//     //     'body': 'bar',
-//     //     'userId': 1,
-//     //   },
-//     //   headers: {
-//     //     'Content-type': 'application/json; charset=UTF-8',
-//     //   },
-//     // );
-//   } catch (e) {
-//     print("Error when post call $e");
-//   }
-// }

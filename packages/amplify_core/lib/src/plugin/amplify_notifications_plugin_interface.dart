@@ -28,11 +28,6 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
     required AmplifyAuthProviderRepository authProviderRepo,
   }) async {}
 
-  // Future<void> registerForRemoteNotifications() {
-  //   throw UnimplementedError(
-  //       'registerForRemoteNotifications() has not been implemented');
-  // }
-
   Future<PushPermissionRequestStatus> requestMessagingPermission(
       {bool? alert = true, bool? badge = true, bool? sound = true}) {
     throw UnimplementedError(
@@ -45,7 +40,7 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
     );
   }
 
-  Future<String> getToken() {
+  Future<String?> getToken() {
     throw UnimplementedError(
       'getToken() has not been implemented',
     );

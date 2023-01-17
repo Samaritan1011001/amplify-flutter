@@ -2,6 +2,7 @@ package com.amazonaws.amplify.amplify_push_notification.amplify_push_notificatio
 
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
+import android.util.Log
 
 private const val PREFIX = "RTNPushNotification_"
 
@@ -36,6 +37,7 @@ object PushNotificationEventManager {
     }
 
     private fun sendDartEvent(type: PushNotificationEventType, params: JSONObject?) {
+        Log.d(TAG,"Sending event to dart")
         channel.invokeMethod(type.toString(), params.toString())
     }
 

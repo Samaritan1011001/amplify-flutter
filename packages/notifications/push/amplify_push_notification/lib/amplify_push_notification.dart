@@ -2,94 +2,32 @@ library amplify_push_notification;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:amplify_core/amplify_core.dart';
-// import 'package:amplify_push_notifications_pinpoint/endpoint_client.dart';
-// import 'package:amplify_push_notifications_pinpoint/src/impl/device_info_context_provider.dart';
-// import 'package:amplify_push_notifications_pinpoint/src/sdk/pinpoint.dart';
 import 'package:flutter/services.dart';
 
 import 'callback_dispatcher.dart';
-
-// import 'package:amplify_push_notifications_pinpoint/lib/sdk/pinpoint.dart';
-
-// @pragma(
-//     'vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
-// void callbackDispatcher() {
-//   Workmanager().executeTask((task, inputData) {
-//     print("Native called background task:"); //simpleTask will be emitted here.
-//     return Future.value(true);
-//   });
-// }
 
 const MethodChannel _methodChannel =
     MethodChannel('com.amazonaws.amplify/push_notification_plugin');
 
 class AmplifyPushNotification extends NotificationsPluginInterface {
   AmplifyPushNotification({this.serviceProviderClient});
-  ServiceProviderClient? serviceProviderClient;
 
-  // EndpointClient? __endpointClient;
-  static final AmplifyLogger _logger =
-      AmplifyLogger.category(Category.notifications)
-          .createChild('AmplifyPushNotification');
+  final ServiceProviderClient? serviceProviderClient;
 
   final StreamController<String> _newTokenStream = StreamController<String>();
   final StreamController<RemotePushMessage> _foregroundEventStreamController =
       StreamController<RemotePushMessage>.broadcast();
-  final StreamController<RemotePushMessage>
-      _notificationOpenedStreamController =
-      StreamController<RemotePushMessage>.broadcast();
-
   RemoteMessageCallback? bgUserGivenCallback;
-  RemoteMessageCallback? appOpeningUserGivenCallback;
-
+  late RemoteMessageCallback appOpeningUserGivenCallback;
   String BG_USER_CALLBACK_ID = "bg_user_given_callback";
   String APP_OPNENING_USER_CALLBACK_ID = "app_opening_user_given_callback";
-
   bool _isConfigured = false;
-
-  Future<dynamic> nativeMethodCallHandler(MethodCall methodCall) async {
-    print('Native call!');
-    switch (methodCall.method) {
-      case "FOREGROUND_MESSAGE_RECEIVED":
-        try {
-          final jData = jsonDecode(methodCall.arguments);
-          print(
-              "ForegroundMessageReceived data IOS -> ${methodCall.arguments}");
-
-          print("ForegroundMessageReceived data -> $jData");
-          _foregroundEventStreamController.sink
-              .add(RemotePushMessage.fromJson(jData));
-        } catch (e) {
-          _logger.info("Error $e");
-        }
-        break;
-      case "BACKGROUND_MESSAGE_RECEIVED":
-        try {
-          final jData = jsonDecode(methodCall.arguments);
-          print("BackgroundMessageReceived data -> $jData");
-          // bgUserGivenCallback!(RemotePushMessage.fromJson(jData));
-        } catch (e) {
-          _logger.info("Error $e");
-        }
-        break;
-      case "NOTIFICATION_OPENED_APP":
-        try {
-          final jData = jsonDecode(methodCall.arguments);
-          print("NOTIFICATION_OPENED_APP data -> $jData");
-
-          // appOpeningUserGivenCallback!(RemotePushMessage.fromJson(jData));
-        } catch (e) {
-          _logger.info("Error $e");
-        }
-        break;
-      default:
-        print("Nothing ${methodCall.method}");
-        return "Nothing";
-    }
-  }
+  final AmplifyLogger _logger = AmplifyLogger.category(Category.notifications)
+      .createChild('AmplifyPushNotification');
 
   @override
   Future<void> configure({
@@ -104,15 +42,13 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     }
 
     if (!_isConfigured) {
-      _logger.info("Configure works in AmplifyPushNotification!");
-
       // Register FCM and APNS if auto-registeration is enabled
       await _registerForRemoteNotifications();
 
       // Register native listeners for token generation and notification handling
-      _methodChannel.setMethodCallHandler(nativeMethodCallHandler);
+      _methodChannel.setMethodCallHandler(_nativeToDartMethodCallHandler);
 
-      // Register library listeners for token, notificaiton handling
+      // Register library listeners for token
       onNewToken().then(
         (stream) => stream.listen(
           (address) async {
@@ -121,18 +57,6 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
           },
         ),
       );
-      onForegroundNotificationReceived().listen((event) {
-        // AppleNotification notif = event.notification as AppleNotification;
-
-        _logger.info(
-            "received notification in foreground listener ${event.content}");
-      });
-
-      // onBackgroundNotificationReceived().listen((event) {
-      //   _logger.info("received notification in background listener $event");
-      // });
-
-      // onNotificationOpenedApp().listen((event) {});
 
       // Initialize Endpoint Client
       await serviceProviderClient?.init(
@@ -147,45 +71,100 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     // Register the callback dispatcher
     _registerCallbackDispatcher();
 
-    // Workmanager().initialize(
-    //     callbackDispatcher, // The top level function, aka callbackDispatcher
-    //     isInDebugMode:
-    //         true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-    //     );
+    _logger.info("CONFIGURE API | Successfully configure push notifications");
 
     _isConfigured = true;
   }
 
+  Future<dynamic> _nativeToDartMethodCallHandler(MethodCall methodCall) async {
+    try {
+      final decodedNotfication = jsonDecode(methodCall.arguments);
+      switch (methodCall.method) {
+        case "FOREGROUND_MESSAGE_RECEIVED":
+          print(
+            "NOTIFICATION HANDLING API | Plugin received foreground notification: $decodedNotfication",
+          );
+          _foregroundEventStreamController.sink.add(
+            RemotePushMessage.fromJson(decodedNotfication),
+          );
+          break;
+        case "BACKGROUND_MESSAGE_RECEIVED":
+          print(
+            "NOTIFICATION HANDLING API | Plugin received background notification: $decodedNotfication",
+          );
+          bgUserGivenCallback!(RemotePushMessage.fromJson(decodedNotfication));
+          break;
+        case "NOTIFICATION_OPENED_APP":
+          print(
+            "NOTIFICATION HANDLING API | Plugin received notificaiton tapped event: $decodedNotfication",
+          );
+          appOpeningUserGivenCallback(
+              RemotePushMessage.fromJson(decodedNotfication));
+          break;
+        default:
+          break;
+      }
+    } catch (e) {
+      _logger.error("Error in native-dart method handler $e");
+    }
+  }
+
   Future<void> _registerCallbackDispatcher() async {
-    _logger.info("_registerCallbackDispatcher");
-    final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
-    await _methodChannel.invokeMethod<void>(
-        'initializeService', <dynamic>[callback?.toRawHandle()]);
+    try {
+      final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
+      await _methodChannel.invokeMethod<void>(
+          'initializeService', <dynamic>[callback?.toRawHandle()]);
+      _logger.info("Successfully registered callback dispatcher");
+    } catch (e) {
+      _logger.error(
+        "Error when registering callback dispatcher: $e",
+      );
+    }
   }
 
   Future<void> _registerUserGivenCallback(
-      String callbackId, RemoteMessageCallback userCallback) async {
-    _logger.info("_registerUserGivenCallback");
-    final callback = PluginUtilities.getCallbackHandle(userCallback);
-    _logger.info(
-        "callback was registered in plugin cache ${callback?.toRawHandle()}");
+    String callbackId,
+    RemoteMessageCallback userCallback,
+  ) async {
+    try {
+      final callback = PluginUtilities.getCallbackHandle(userCallback);
+      _logger.info("Successfully registered notification handling callback");
 
-    await _methodChannel.invokeMethod(
-        callbackId == BG_USER_CALLBACK_ID
-            ? 'registerBGUserGivenCallback'
-            : 'registerAppOpeningUserGivenCallback',
-        <dynamic>[callback?.toRawHandle()]);
+      await _methodChannel.invokeMethod(
+          callbackId == BG_USER_CALLBACK_ID
+              ? 'registerBGUserGivenCallback'
+              : 'registerAppOpeningUserGivenCallback',
+          <dynamic>[callback?.toRawHandle()]);
+    } catch (e) {
+      _logger.error(
+        "Error when registering notification handling callback: $e",
+      );
+    }
   }
 
   Future<void> _registerDevice({String? address}) async {
-    _logger.info("registerDevice");
-    address = address ?? await getToken();
-    await serviceProviderClient?.registerDevice(address);
+    try {
+      address = address ?? await getToken();
+      if (address != null) await serviceProviderClient?.registerDevice(address);
+      _logger.info("Successfully registered device with the servvice provider");
+    } catch (e) {
+      _logger.error(
+        "Error when registering device with the servvice provider: $e",
+      );
+    }
   }
 
   Future<void> _registerForRemoteNotifications() async {
-    _logger.info("registerForRemoteNotifications");
-    await _methodChannel.invokeMethod<String>('registerForRemoteNotifications');
+    try {
+      await _methodChannel
+          .invokeMethod<String>('registerForRemoteNotifications');
+      _logger.info(
+          "Successfully registered device to receive remote notifications");
+    } catch (e) {
+      _logger.error(
+        "Error when registering device to receive remote notifications: $e",
+      );
+    }
   }
 
   @override
@@ -194,15 +173,27 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     PushPermissionRequestStatus pushPermissionRequestStatus =
         PushPermissionRequestStatus.undetermined;
 
-    bool? granted =
-        await _methodChannel.invokeMethod<bool>('requestMessagingPermission');
+    try {
+      bool? granted = await _methodChannel.invokeMethod<bool>(
+          'requestMessagingPermission',
+          jsonEncode({
+            "alert": alert,
+            "badge": badge,
+            "sound": sound,
+          }));
 
-    if (granted != null) {
-      pushPermissionRequestStatus = granted
-          ? PushPermissionRequestStatus.granted
-          : PushPermissionRequestStatus.denied;
+      if (granted != null) {
+        pushPermissionRequestStatus = granted
+            ? PushPermissionRequestStatus.granted
+            : PushPermissionRequestStatus.denied;
+      }
+      _logger.info(
+        "PERMISSIONS API | Push Notuificaiton Permission request status: $pushPermissionRequestStatus",
+      );
+    } catch (e) {
+      _logger.error("Error when requesting permission: $e");
     }
-    _logger.info("pushPermissionRequestStatus -> $pushPermissionRequestStatus");
+
     return pushPermissionRequestStatus;
   }
 
@@ -224,11 +215,18 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   }
 
   @override
-  Future<String> getToken() async {
-    String? token = await _methodChannel.invokeMethod<String>('getToken');
-    print("Token -> $token");
+  Future<String?> getToken() async {
+    try {
+      String? token = await _methodChannel.invokeMethod<String>('getToken');
+      if (token != null) {
+        print("TOKEN API |  Successfully retreived device token: $token");
 
-    return token!;
+        return token;
+      }
+    } catch (e) {
+      _logger.error("Error when getting device token: $e");
+    }
+    return null;
   }
 
   @override
@@ -238,15 +236,17 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   @override
   void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
     bgUserGivenCallback = callback;
-    _registerUserGivenCallback(BG_USER_CALLBACK_ID, callback);
+    if (Platform.isAndroid) {
+      _registerUserGivenCallback(BG_USER_CALLBACK_ID, callback);
+    }
   }
 
   @override
   void onNotificationOpenedApp(RemoteMessageCallback callback) {
     appOpeningUserGivenCallback = callback;
-    _registerUserGivenCallback(APP_OPNENING_USER_CALLBACK_ID, callback);
-
-    // return _notificationOpenedStreamController.stream;
+    if (Platform.isAndroid) {
+      _registerUserGivenCallback(APP_OPNENING_USER_CALLBACK_ID, callback);
+    }
   }
 
   @override
