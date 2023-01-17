@@ -93,7 +93,7 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
         case "initializeService": do{
             if let array = callArgs as? [Any] {
                 assert(array.count == 1, "Invalid argument count for 'initializeService'")
-                this.startPushNotificationService(handle: array[0] as! Int64)
+//                this.startPushNotificationService(handle: array[0] as! Int64)
                 result(true)
             }
             
@@ -173,7 +173,7 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
        
         let entrypoint = info.callbackName
         let uri = info.callbackLibraryPath
-        let result = _headlessRunner.run(withEntrypoint: entrypoint, libraryURI: uri)
+        _ = _headlessRunner.run(withEntrypoint: entrypoint, libraryURI: uri)
 //        assert(registerPlugins != nil, "failed to set registerPlugins")
         
         // TODO: registerPlugins has to be initialized in flutter app's appdelegate.m
