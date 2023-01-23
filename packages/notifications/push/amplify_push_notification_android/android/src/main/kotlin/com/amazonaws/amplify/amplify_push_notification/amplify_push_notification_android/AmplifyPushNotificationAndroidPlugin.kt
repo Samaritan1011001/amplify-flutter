@@ -95,7 +95,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
                 })
             }
             "onNewToken" -> {
-                LOG.info("onNewToken native method ")
+//                LOG.info("onNewToken native method ")
                 isListeningToOnNewToken = true
             }
             "initializeService" -> {
