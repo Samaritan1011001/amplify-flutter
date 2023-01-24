@@ -20,6 +20,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
 import org.json.JSONObject
+import com.amplifyframework.pushnotifications.pinpoint.utils
 
 /** AmplifyPushNotificationAndroidPlugin */
 class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, MethodCallHandler,
@@ -82,6 +83,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
             }
             "getToken" -> {
                 LOG.info("getting token ")
+                PushNotificationsUtils
                 FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
                     if (!task.isSuccessful) {
                         LOG.info("Fetching FCM registration token failed")

@@ -76,6 +76,19 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     _isConfigured = true;
   }
 
+  Future<void> recordNotificationEvent({
+    required AnalyticsEvent event,
+  }) async {
+    if (serviceProviderClient == null) {
+      throw const AnalyticsException('Configure Amplify first.');
+    }
+    event.properties
+      ..addStringProperty('app_state', 'foreground')
+      ..addStringProperty('channel', 'PUSH')
+      ..addBoolProperty('Successful', true);
+    serviceProviderClient?.recordNotificationEvent(event: event);
+  }
+
   Future<dynamic> _nativeToDartMethodCallHandler(MethodCall methodCall) async {
     try {
       final decodedNotfication = jsonDecode(methodCall.arguments);
@@ -87,6 +100,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
           _foregroundEventStreamController.sink.add(
             RemotePushMessage.fromJson(decodedNotfication),
           );
+          recordNotificationEvent(
+              event: AnalyticsEvent("foreground_message_received"));
           break;
         case "BACKGROUND_MESSAGE_RECEIVED":
           print(
