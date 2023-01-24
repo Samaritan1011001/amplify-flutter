@@ -20,17 +20,15 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
 import org.json.JSONObject
-import com.amplifyframework.pushnotifications.pinpoint.utils
+//import com.amplifyframework.pushnotifications.pinpoint.utils
 
 /** AmplifyPushNotificationAndroidPlugin */
-class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, MethodCallHandler,
-    FirebaseMessagingService(), PluginRegistry.NewIntentListener {
+class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.NewIntentListener {
 
     private lateinit var channel: MethodChannel
     private var mainActivity: Activity? = null
     private lateinit var context: Context
     private val LOG = Amplify.Logging.forNamespace("amplify:flutter:push_notification_plugin")
-    private var isListeningToOnNewToken = false
     private var activityBinding: ActivityPluginBinding? = null
 
     companion object {
@@ -83,7 +81,6 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
             }
             "getToken" -> {
                 LOG.info("getting token ")
-                PushNotificationsUtils
                 FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
                     if (!task.isSuccessful) {
                         LOG.info("Fetching FCM registration token failed")
@@ -95,10 +92,6 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
                     result.success(token)
 
                 })
-            }
-            "onNewToken" -> {
-//                LOG.info("onNewToken native method ")
-                isListeningToOnNewToken = true
             }
             "initializeService" -> {
                 val args = call.arguments<ArrayList<*>>()
@@ -181,24 +174,6 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
 //      Log.d(TAG, "notificationTappedCounter on app launch $counter")
     }
 
-    /**
-     * Called if the FCM registration token is updated. This may occur if the security of
-     * the previous token had been compromised. Note that this is called when the
-     * FCM registration token is initially generated so this is where you would retrieve the token.
-     */
-    override fun onNewToken(token: String) {
-        LOG.info("Refreshed token: $token")
-        if (isListeningToOnNewToken) {
-            val tokenDataJson = JSONObject()
-            tokenDataJson.apply {
-                put("token", token)
-            }
-            PushNotificationEventManager.sendEvent(
-                PushNotificationEventType.NEW_TOKEN,
-                tokenDataJson
-            )
-        }
-    }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         Log.d(TAG, "attached to activity $binding")

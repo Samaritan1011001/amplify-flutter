@@ -91,34 +91,41 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
 
   Future<dynamic> _nativeToDartMethodCallHandler(MethodCall methodCall) async {
     try {
-      final decodedNotfication = jsonDecode(methodCall.arguments);
+      final decodedContent = jsonDecode(methodCall.arguments);
       switch (methodCall.method) {
+        case "NEW_TOKEN":
+          print(
+            "TOKENS API | Plugin received a new device token: $decodedContent",
+          );
+          _newTokenStream.sink.add(
+            decodedContent,
+          );
+          break;
         case "FOREGROUND_MESSAGE_RECEIVED":
           print(
-            "NOTIFICATION HANDLING API | Plugin received foreground notification: $decodedNotfication",
+            "NOTIFICATION HANDLING API | Plugin received foreground notification: $decodedContent",
           );
           _foregroundEventStreamController.sink.add(
-            RemotePushMessage.fromJson(decodedNotfication),
+            RemotePushMessage.fromJson(decodedContent),
           );
           recordNotificationEvent(
               event: AnalyticsEvent("foreground_message_received"));
           break;
         case "BACKGROUND_MESSAGE_RECEIVED":
           print(
-            "NOTIFICATION HANDLING API | Plugin received background notification: $decodedNotfication",
+            "NOTIFICATION HANDLING API | Plugin received background notification: $decodedContent",
           );
           if (bgUserGivenCallback != null) {
-            bgUserGivenCallback!(
-                RemotePushMessage.fromJson(decodedNotfication));
+            bgUserGivenCallback!(RemotePushMessage.fromJson(decodedContent));
           }
           break;
         case "NOTIFICATION_OPENED_APP":
           print(
-            "NOTIFICATION HANDLING API | Plugin received notificaiton tapped event: $decodedNotfication",
+            "NOTIFICATION HANDLING API | Plugin received notificaiton tapped event: $decodedContent",
           );
           if (appOpeningUserGivenCallback != null) {
             appOpeningUserGivenCallback!(
-                RemotePushMessage.fromJson(decodedNotfication));
+                RemotePushMessage.fromJson(decodedContent));
           }
           break;
         default:
@@ -229,15 +236,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   // }
 
   @override
-  Future<Stream<String>> onNewToken() async {
-    try {
-      await _methodChannel.invokeMethod('onNewToken');
-      print("TOKEN API |  Successfully set onNewToken stream");
-    } catch (e) {
-      _logger.error("Error when creating onNewToken stream: $e");
-    }
-    return _newTokenStream.stream;
-  }
+  Future<Stream<String>> onNewToken() async => _newTokenStream.stream;
 
   @override
   Future<String?> getToken() async {
