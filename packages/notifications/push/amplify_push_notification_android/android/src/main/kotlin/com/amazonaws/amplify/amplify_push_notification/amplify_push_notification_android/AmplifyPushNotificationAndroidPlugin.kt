@@ -1,12 +1,21 @@
 package com.amazonaws.amplify.amplify_push_notification.amplify_push_notification_android
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.NonNull
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.requestPermissions
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import com.amazonaws.amplify.AtomicResult
 import com.amplifyframework.core.Amplify
+import com.amplifyframework.pushnotifications.pinpoint.utils.PushNotificationsUtils
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -23,7 +32,7 @@ import org.json.JSONObject
 //import com.amplifyframework.pushnotifications.pinpoint.utils
 
 /** AmplifyPushNotificationAndroidPlugin */
-class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.NewIntentListener {
+class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.NewIntentListener, PluginRegistry.RequestPermissionsResultListener  {
 
     private lateinit var channel: MethodChannel
     private var mainActivity: Activity? = null
@@ -76,10 +85,11 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
             "requestMessagingPermission" -> {
                 LOG.info("Asking for permission ")
 //        mainActivity!!.startActivity(Intent(context, PermissionActivity::class.java))
-
+                askNotificationPermission()
                 result.success(null)
             }
             "getToken" -> {
+
                 LOG.info("getting token ")
                 FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
                     if (!task.isSuccessful) {
@@ -108,6 +118,56 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
                 registerCallbackToCache(context, args, APP_OPENING_USER_CALLBACK_HANDLE_KEY)
             }
             else -> result.notImplemented()
+        }
+    }
+
+
+    // Declare the launcher at the top of your Activity/Fragment:
+//    private val requestPermissionLauncher = ActivityCompat.registerForActivityResult(
+//        ActivityResultContracts.RequestPermission()
+//    ) { isGranted: Boolean ->
+//        if (isGranted) {
+//            // FCM SDK (and your app) can post notifications.
+//            LOG.info("App can post push notifications 2 ")
+//        } else {
+//            // TODO: Inform user that that your app will not show notifications.
+//        }
+//    }
+
+    private fun askNotificationPermission() {
+        mainActivity?.let {
+            if (Build.VERSION.SDK_INT >= 33) {
+
+//       This is only necessary for API level >= 33 (TIRAMISU)
+                if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED
+                ) {
+                    // FCM SDK (and your app) can post notifications.
+                    LOG.info("App can post push notifications 1 ")
+                } else if (shouldShowRequestPermissionRationale(
+                        it,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    )
+                ) {
+                    // TODO: display an educational UI explaining to the user the features that will be enabled
+                    //       by them granting the POST_NOTIFICATION permission. This UI should provide the user
+                    //       "OK" and "No thanks" buttons. If the user selects "OK," directly request the permission.
+                    //       If the user selects "No thanks," allow the user to continue without notifications.
+                    LOG.info("App should prompt why we asking for permission")
+//                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    requestPermissions(it,
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                        1)
+                } else {
+                    LOG.info("Prompt user with dialog ")
+                    // Directly ask for the permission
+//                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    requestPermissions(it,
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                        1)
+
+                }
+            }
         }
     }
 
@@ -202,6 +262,35 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ): Boolean {
+        when (requestCode) {
+            1 -> {
+                // If request is cancelled, the result arrays are empty.
+                if ((grantResults.isNotEmpty() &&
+                            grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    // Permission is granted. Continue the action or workflow
+                    // in your app.
+                    LOG.info("Permissions granted ")
+                } else {
+                    // Explain to the user that the feature is unavailable because
+                    // the feature requires a permission that the user has denied.
+                    // At the same time, respect the user's decision. Don't link to
+                    // system settings in an effort to convince the user to change
+                    // their decision.
+                    LOG.info("Permissions denied ")
+
+                }
+                return true
+            }
+
+        }
+        return false
     }
 
 }

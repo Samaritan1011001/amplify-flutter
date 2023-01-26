@@ -18,6 +18,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.amplifyframework.pushnotifications.pinpoint.utils.NotificationPayload
+import com.amplifyframework.pushnotifications.pinpoint.utils.PushNotificationsUtils
 import com.google.firebase.messaging.RemoteMessage
 import io.flutter.view.FlutterMain
 import kotlinx.coroutines.*
@@ -51,19 +53,21 @@ class PushNotificationReceiver : BroadcastReceiver() {
                     try {
                         val pendingResult: PendingResult = goAsync()
 
-                        displayNotification(context, remoteMessage, pendingResult)
+                        PushNotificationsUtils(context,"testChannelId").showNotification(NotificationPayload("test", "bodyyyy",null,"https://9to5mac.com/wp-content/uploads/sites/6/2022/06/7411.WWDC_2022_Light-1024w-1366h@2xipad.jpeg?quality=82&strip=all"),
+                            AmplifyPushNotificationAndroidPlugin::class.java)
+//                        displayNotification(context, remoteMessage, pendingResult)
 //                    val notificationDataJson = convertBundleToJson(remoteMessageBundle)
 //                    PushNotificationEventManager.sendEvent(
 //                        PushNotificationEventType.BACKGROUND_MESSAGE_RECEIVED, notificationDataJson
 //                    )
 //
                         // TODO: Start a background headless service
-                        FlutterMain.startInitialization(context)
-                        FlutterMain.ensureInitializationComplete(context, null)
-                        PushNotificationBackgroundService.enqueueWork(context, it)
+//                        FlutterMain.startInitialization(context)
+//                        FlutterMain.ensureInitializationComplete(context, null)
+//                        PushNotificationBackgroundService.enqueueWork(context, it)
 
                     } catch (exception: Exception) {
-                        Log.e(TAG, "Something went wrong while starting headless task")
+                        Log.e(TAG, "Something went wrong while starting headless task $exception")
                     }
                 }
             }

@@ -297,6 +297,22 @@ class _MyAppState extends State<MyApp> {
                     Text(
                         "Permission grant status: $pushPermissionRequestStatus"),
                 ],
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      pushPermissionRequestStatus = await Amplify.Notifications
+                          .requestMessagingPermission(
+                        alert: permissionOptionsMap['alert'],
+                        sound: permissionOptionsMap['sound'],
+                        badge: permissionOptionsMap['badge'],
+                      );
+                      setState(() {});
+                    } catch (e) {
+                      print(e.toString());
+                    }
+                  },
+                  child: const Text('requestMessagingPermission'),
+                ),
                 // ElevatedButton(
                 //   onPressed: () async {
                 //     try {

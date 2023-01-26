@@ -108,8 +108,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
           _foregroundEventStreamController.sink.add(
             RemotePushMessage.fromJson(decodedContent),
           );
-          recordNotificationEvent(
-              event: AnalyticsEvent("foreground_message_received"));
+          // recordNotificationEvent(
+          //     event: AnalyticsEvent("foreground_message_received"));
           break;
         case "BACKGROUND_MESSAGE_RECEIVED":
           print(

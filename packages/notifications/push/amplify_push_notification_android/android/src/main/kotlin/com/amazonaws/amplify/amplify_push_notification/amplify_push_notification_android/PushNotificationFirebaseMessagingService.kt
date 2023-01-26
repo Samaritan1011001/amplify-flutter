@@ -21,10 +21,10 @@ class PushNotificationFirebaseMessagingService : FirebaseMessagingService() {
         tokenDataJson.apply {
             put("token", token)
         }
-        PushNotificationEventManager.sendEvent(
-            PushNotificationEventType.NEW_TOKEN,
-            tokenDataJson
-        )
+//        PushNotificationEventManager.sendEvent(
+//            PushNotificationEventType.NEW_TOKEN,
+//            tokenDataJson
+//        )
 
     }
     // [END on_new_token]
