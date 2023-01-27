@@ -49,6 +49,11 @@ class AmplifyClassImpl extends AmplifyClass {
           plugin.cast(),
           authProviderRepo: authProviderRepo,
         );
+      case Category.notifications:
+        return Notifications.addPlugin(
+          plugin.cast(),
+          authProviderRepo: authProviderRepo,
+        );
       case Category.hub:
         throw UnimplementedError();
     }
@@ -66,6 +71,7 @@ class AmplifyClassImpl extends AmplifyClass {
         ...Auth.plugins,
         ...DataStore.plugins,
         ...Storage.plugins,
+        ...Notifications.plugins,
       ].map(
         (p) => p.configure(
           config: amplifyConfig,
