@@ -15,7 +15,8 @@ void globalBgCallback(RemotePushMessage remotePushMessage) async {
   try {
     DartPluginRegistrant.ensureInitialized();
     WidgetsFlutterBinding.ensureInitialized();
-    final prefs = await SharedPreferences.getInstance();
+    // SharedPreferencesIOS.registerWith();
+    // final prefs = await SharedPreferences.getInstance();
     // await prefs.reload();
     // final int? globalBgCallbackCalled =
     //     prefs.getInt('globalBgCallbackCalled');
