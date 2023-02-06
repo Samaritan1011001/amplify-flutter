@@ -2,7 +2,6 @@ library amplify_push_notification;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:amplify_core/amplify_core.dart';
@@ -20,6 +19,9 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
 
   final StreamController<String> _newTokenStream = StreamController<String>();
   final StreamController<RemotePushMessage> _foregroundEventStreamController =
+      StreamController<RemotePushMessage>.broadcast();
+  final StreamController<RemotePushMessage>
+      _onNotificaitonOpenedEventStreamController =
       StreamController<RemotePushMessage>.broadcast();
   RemoteMessageCallback? bgUserGivenCallback;
   RemoteMessageCallback? appOpeningUserGivenCallback;
@@ -123,10 +125,13 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
           print(
             "NOTIFICATION HANDLING API | Plugin received notificaiton tapped event: $decodedContent",
           );
-          if (appOpeningUserGivenCallback != null) {
-            appOpeningUserGivenCallback!(
-                RemotePushMessage.fromJson(decodedContent));
-          }
+          _onNotificaitonOpenedEventStreamController.sink.add(
+            RemotePushMessage.fromJson(decodedContent),
+          );
+          // if (appOpeningUserGivenCallback != null) {
+          //   appOpeningUserGivenCallback!(
+          //       RemotePushMessage.fromJson(decodedContent));
+          // }
           break;
         default:
           break;
@@ -260,22 +265,33 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   @override
   void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
     bgUserGivenCallback = callback;
-    if (Platform.isAndroid) {
-      _registerUserGivenCallback(BG_USER_CALLBACK_ID, callback);
-    }
+    // if (Platform.isAndroid) {
+    _registerUserGivenCallback(BG_USER_CALLBACK_ID, callback);
+    // }
   }
 
   @override
-  void onNotificationOpenedApp(RemoteMessageCallback callback) {
-    appOpeningUserGivenCallback = callback;
-    if (Platform.isAndroid) {
-      _registerUserGivenCallback(APP_OPNENING_USER_CALLBACK_ID, callback);
-    }
-  }
+  Stream<RemotePushMessage> onNotificationOpenedApp() =>
+      _onNotificaitonOpenedEventStreamController.stream;
 
   @override
-  Future<RemotePushMessage> getInitialNotification() async {
-    return RemotePushMessage(messageId: 'test');
+  Future<RemotePushMessage?> getInitialNotification() async {
+    try {
+      String? launchNotification =
+          await _methodChannel.invokeMethod<String>('getLaunchNotification');
+      if (launchNotification != null) {
+        print(
+            "NOTIFICATION HANDLING API |  Successfully retreived launch notification: $launchNotification");
+        final decodedContent = jsonDecode(launchNotification);
+        return RemotePushMessage.fromJson(decodedContent);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      _logger.error("Error when getting launch notification: $e");
+    }
+    return null;
+    // return RemotePushMessage(messageId: 'test');
   }
 
   @override

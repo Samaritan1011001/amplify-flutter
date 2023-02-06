@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'dart:ui';
 
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
@@ -8,23 +9,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'amplifyconfiguration.dart';
 
-// @pragma('vm:entry-point')
-// void globalBgCallback(RemotePushMessage remotePushMessage) async {
-//   print("user Given callback called");
-//   try {
-//     // DartPluginRegistrant.ensureInitialized();
-//     WidgetsFlutterBinding.ensureInitialized();
+@pragma('vm:entry-point')
+void globalBgCallback(RemotePushMessage remotePushMessage) async {
+  print("globalBgCallback called");
+  try {
+    DartPluginRegistrant.ensureInitialized();
+    WidgetsFlutterBinding.ensureInitialized();
+    final prefs = await SharedPreferences.getInstance();
+    // await prefs.reload();
+    // final int? globalBgCallbackCalled =
+    //     prefs.getInt('globalBgCallbackCalled');
 
-//     final prefs = await SharedPreferences.getInstance();
-
-//     final int? globalBgCallbackCalled = prefs.getInt('globalBgCallbackCalled');
-
-//     await prefs.setInt('globalBgCallbackCalled',
-//         globalBgCallbackCalled != null ? (globalBgCallbackCalled + 1) : 0);
-//   } catch (e) {
-//     print("Error when post call $e");
-//   }
-// }
+    // await prefs.setInt('globalBgCallbackCalled',
+    //     globalBgCallbackCalled != null ? (globalBgCallbackCalled + 1) : 0);
+  } catch (e) {
+    print("Error when post call $e");
+  }
+}
 
 // @pragma('vm:entry-point')
 // void globalOnNotificationOpenedCallback(
@@ -75,27 +76,25 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // TODO: implement initState
     getAndUpdateCallbackCounts();
   }
 
-  static void globalBgCallback(RemotePushMessage remotePushMessage) async {
-    print("globalBgCallback called");
-    try {
-      // DartPluginRegistrant.ensureInitialized();
-      WidgetsFlutterBinding.ensureInitialized();
+  // static void globalBgCallback(RemotePushMessage remotePushMessage) async {
+  //   print("globalBgCallback called");
+  //   try {
+  //     DartPluginRegistrant.ensureInitialized();
+  //     WidgetsFlutterBinding.ensureInitialized();
+  //     final prefs = await SharedPreferences.getInstance();
+  //     await prefs.reload();
+  //     final int? globalBgCallbackCalled =
+  //         prefs.getInt('globalBgCallbackCalled');
 
-      final prefs = await SharedPreferences.getInstance();
-
-      final int? globalBgCallbackCalled =
-          prefs.getInt('globalBgCallbackCalled');
-
-      await prefs.setInt('globalBgCallbackCalled',
-          globalBgCallbackCalled != null ? (globalBgCallbackCalled + 1) : 0);
-    } catch (e) {
-      print("Error when post call $e");
-    }
-  }
+  //     await prefs.setInt('globalBgCallbackCalled',
+  //         globalBgCallbackCalled != null ? (globalBgCallbackCalled + 1) : 0);
+  //   } catch (e) {
+  //     print("Error when post call $e");
+  //   }
+  // }
 
   static void globalOnNotificationOpenedCallback(
       RemotePushMessage remotePushMessage) async {
@@ -138,13 +137,29 @@ class _MyAppState extends State<MyApp> {
 
   void getAndUpdateCallbackCounts() async {
     try {
+      if (!Amplify.isConfigured) await _configureAmplify();
+      final launchNotification =
+          await Amplify.Notifications.getInitialNotification();
       final prefs = await SharedPreferences.getInstance();
       await prefs.reload();
-      setState(() {
-        globalBgCallbackCount = prefs.getInt(globalBgCallbackKey) ?? -1;
-        globalOnNotificationOpenedCallbackCount =
-            prefs.getInt(globalOnNotificationOpenedCallbackKey) ?? -1;
-      });
+
+      if (launchNotification != null) {
+        final int? globalNotificationOpenedCallbackCalled =
+            prefs.getInt(globalOnNotificationOpenedCallbackKey);
+
+        await prefs.setInt(
+            globalOnNotificationOpenedCallbackKey,
+            globalNotificationOpenedCallbackCalled != null
+                ? (globalNotificationOpenedCallbackCalled + 1)
+                : 0);
+        await prefs.reload();
+      }
+
+      // setState(() {
+      //   globalBgCallbackCount = prefs.getInt(globalBgCallbackKey) ?? -1;
+      //   globalOnNotificationOpenedCallbackCount =
+      //       prefs.getInt(globalOnNotificationOpenedCallbackKey) ?? -1;
+      // });
       print("globalBgCallbackCount -> $globalBgCallbackCount");
       print(
           "globalOnNotificationOpenedCallbackCount -> $globalOnNotificationOpenedCallbackCount");
@@ -154,7 +169,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
-  void _configureAmplify() async {
+  Future<void> _configureAmplify() async {
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling
     // setState to update our non-existent appearance.
@@ -199,7 +214,7 @@ class _MyAppState extends State<MyApp> {
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                if (Platform.isAndroid) ...[
+                ...[
                   ListTile(
                     title: Text(
                         "Background callback count: $globalBgCallbackCount"),
@@ -239,7 +254,7 @@ class _MyAppState extends State<MyApp> {
 
                 ElevatedButton(
                   onPressed: () async {
-                    _configureAmplify();
+                    await _configureAmplify();
                   },
                   child: const Text('configure'),
                 ),
@@ -297,22 +312,6 @@ class _MyAppState extends State<MyApp> {
                     Text(
                         "Permission grant status: $pushPermissionRequestStatus"),
                 ],
-                ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      pushPermissionRequestStatus = await Amplify.Notifications
-                          .requestMessagingPermission(
-                        alert: permissionOptionsMap['alert'],
-                        sound: permissionOptionsMap['sound'],
-                        badge: permissionOptionsMap['badge'],
-                      );
-                      setState(() {});
-                    } catch (e) {
-                      print(e.toString());
-                    }
-                  },
-                  child: const Text('requestMessagingPermission'),
-                ),
                 // ElevatedButton(
                 //   onPressed: () async {
                 //     try {
@@ -395,12 +394,12 @@ class _MyAppState extends State<MyApp> {
                 ElevatedButton(
                   onPressed: () async {
                     try {
-                      Amplify.Notifications.onBackgroundNotificationReceived(
-                        Platform.isIOS ? localBgCallback : globalBgCallback,
-                      );
                       // Amplify.Notifications.onBackgroundNotificationReceived(
-                      //   globalBgCallback,
+                      //   Platform.isIOS ? localBgCallback : globalBgCallback,
                       // );
+                      Amplify.Notifications.onBackgroundNotificationReceived(
+                        globalBgCallback,
+                      );
                       setState(() {
                         isBackgroundListernerInitialized = true;
                       });
@@ -426,12 +425,13 @@ class _MyAppState extends State<MyApp> {
                 ElevatedButton(
                   onPressed: () async {
                     try {
-                      Amplify.Notifications.onNotificationOpenedApp(
-                        Platform.isIOS
-                            ? localOnNotificationOpenedCallback
-                            : globalOnNotificationOpenedCallback,
-                      );
-
+                      final onNotificationOpened =
+                          Amplify.Notifications.onNotificationOpenedApp();
+                      onNotificationOpened.listen((event) {
+                        setState(() {
+                          notificationOpenedMessage = event;
+                        });
+                      });
                       setState(() {
                         isOnNotificationOpenedListernerInitialized = true;
                       });
@@ -446,14 +446,28 @@ class _MyAppState extends State<MyApp> {
                     title: Text(
                         "onNotificationOpened event listener initialized!"),
                   ),
-                if (Platform.isIOS)
-                  ListTile(
-                    title: Text(
-                      notificationOpenedMessage == null
-                          ? "No notification opened message yet"
-                          : "Title: ${notificationOpenedMessage!.content?.title?.toString() ?? ""}",
-                    ),
+                // if (Platform.isIOS)
+                ListTile(
+                  title: Text(
+                    notificationOpenedMessage == null
+                        ? "No notification opened message yet"
+                        : "Title: ${notificationOpenedMessage!.content?.title?.toString() ?? ""}",
                   ),
+                ),
+
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      if (!Amplify.isConfigured) await _configureAmplify();
+                      final launchNotification =
+                          await Amplify.Notifications.getInitialNotification();
+                      print("LAUNCH NOTIFICATION | $launchNotification");
+                    } catch (e) {
+                      print(e.toString());
+                    }
+                  },
+                  child: const Text('getLaunchNotification'),
+                ),
                 // ElevatedButton(
                 //   onPressed: () async {
                 //     try {

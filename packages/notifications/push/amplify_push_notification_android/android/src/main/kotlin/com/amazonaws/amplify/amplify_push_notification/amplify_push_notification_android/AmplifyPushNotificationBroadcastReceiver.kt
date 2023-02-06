@@ -53,9 +53,9 @@ class PushNotificationReceiver : BroadcastReceiver() {
                     try {
                         val pendingResult: PendingResult = goAsync()
 
-                        PushNotificationsUtils(context,"testChannelId").showNotification(NotificationPayload("test", "bodyyyy",null,"https://9to5mac.com/wp-content/uploads/sites/6/2022/06/7411.WWDC_2022_Light-1024w-1366h@2xipad.jpeg?quality=82&strip=all"),
-                            AmplifyPushNotificationAndroidPlugin::class.java)
-//                        displayNotification(context, remoteMessage, pendingResult)
+//                        PushNotificationsUtils(context,"testChannelId").showNotification(NotificationPayload("test", "bodyyyy",null,"https://9to5mac.com/wp-content/uploads/sites/6/2022/06/7411.WWDC_2022_Light-1024w-1366h@2xipad.jpeg?quality=82&strip=all"),
+//                            AmplifyPushNotificationAndroidPlugin::class.java)
+                        displayNotification(context, remoteMessage, pendingResult)
 //                    val notificationDataJson = convertBundleToJson(remoteMessageBundle)
 //                    PushNotificationEventManager.sendEvent(
 //                        PushNotificationEventType.BACKGROUND_MESSAGE_RECEIVED, notificationDataJson

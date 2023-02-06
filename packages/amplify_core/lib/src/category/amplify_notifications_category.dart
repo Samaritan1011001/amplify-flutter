@@ -53,13 +53,13 @@ class NotificationsCategory
         : throw _pluginNotAddedException('Notifications');
   }
 
-  void onNotificationOpenedApp(RemoteMessageCallback callback) {
+  Stream<RemotePushMessage> onNotificationOpenedApp() {
     return plugins.length == 1
-        ? plugins[0].onNotificationOpenedApp(callback)
+        ? plugins[0].onNotificationOpenedApp()
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Future<RemotePushMessage> getInitialNotification() {
+  Future<RemotePushMessage?> getInitialNotification() {
     return plugins.length == 1
         ? plugins[0].getInitialNotification()
         : throw _pluginNotAddedException('Notifications');

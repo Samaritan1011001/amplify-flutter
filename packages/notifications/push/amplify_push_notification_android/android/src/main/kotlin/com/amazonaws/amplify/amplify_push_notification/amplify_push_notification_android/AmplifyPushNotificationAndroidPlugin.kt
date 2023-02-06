@@ -39,6 +39,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
     private lateinit var context: Context
     private val LOG = Amplify.Logging.forNamespace("amplify:flutter:push_notification_plugin")
     private var activityBinding: ActivityPluginBinding? = null
+    private var launchNotification: RemoteMessage? = null
 
     companion object {
         @JvmStatic
@@ -102,6 +103,18 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
                     result.success(token)
 
                 })
+            }
+            "getLaunchNotification" -> {
+                LOG.info("Fetching launch notification")
+                askNotificationPermission()
+                if(launchNotification !=null) {
+                    val remoteMessageBundle = getBundleFromRemoteMessage(launchNotification!!)
+                    val notificationDataJson = convertBundleToJson(remoteMessageBundle)
+                    result.success(notificationDataJson.toString())
+                    launchNotification = null
+                }else{
+                    result.success(null)
+                }
             }
             "initializeService" -> {
                 val args = call.arguments<ArrayList<*>>()
@@ -171,7 +184,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
         }
     }
 
-    private fun checkAppOpeningIntentAndEnqueueWork(appOpeningIntent: Intent): Boolean {
+    private fun checkAppOpeningIntentAndEnqueueWork(appOpeningIntent: Intent, fromKilledState: Boolean): Boolean {
         return try {
 
             //        DEBUG: uncomment to debug app killed state use cases
@@ -192,16 +205,17 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
 
                 val editor = spInstance.edit()
                 editor.putInt("notificationTappedCounter", ++counter).apply()
-                PushNotificationBackgroundService.enqueueWork(context, appOpeningIntent)
-//                    val remoteMessage = RemoteMessage(appOpeningIntent.extras)
-//                    val remoteMessageBundle = getBundleFromRemoteMessage(remoteMessage)
-//                    val notificationDataJson = convertBundleToJson(remoteMessageBundle)
-//                    Log.d(TAG, "Send onNotificationOpened message received event: $notificationDataJson")
-//
-//                    PushNotificationEventManager.sendEvent(
-//                        PushNotificationEventType.NOTIFICATION_OPENED_APP, notificationDataJson
-//                    )
-
+//                PushNotificationBackgroundService.enqueueWork(context, appOpeningIntent)
+                    val remoteMessage = RemoteMessage(appOpeningIntent.extras)
+                    val remoteMessageBundle = getBundleFromRemoteMessage(remoteMessage)
+                    val notificationDataJson = convertBundleToJson(remoteMessageBundle)
+                    Log.d(TAG, "Send onNotificationOpened message received event: $notificationDataJson")
+                if(fromKilledState){
+                    launchNotification = remoteMessage
+                }
+                    PushNotificationEventManager.sendEvent(
+                        PushNotificationEventType.NOTIFICATION_OPENED_APP, notificationDataJson
+                    )
             }
             true
         } catch (e: java.lang.Exception) {
@@ -213,7 +227,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
     override fun onNewIntent(intent: Intent): Boolean {
         Log.d(TAG, "onNewIntent in push plugin $intent")
 
-        return checkAppOpeningIntentAndEnqueueWork(intent)
+        return checkAppOpeningIntentAndEnqueueWork(intent, false)
     }
 
     override fun onAttachedToEngine(
@@ -241,7 +255,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
         this.mainActivity = binding.activity
 
         val appOpeningIntent = binding.activity.intent
-        checkAppOpeningIntentAndEnqueueWork(appOpeningIntent)
+        checkAppOpeningIntentAndEnqueueWork(appOpeningIntent, true)
 
         activityBinding = binding
     }

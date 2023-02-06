@@ -226,8 +226,9 @@ class EndpointClient {
             ),
           )
           .result;
-    } catch (error) {
-      _logger.error('updateEndpoint - exception encountered: $error');
+    } catch (error, stacktrace) {
+      _logger.error(
+          'updateEndpoint - exception encountered: $error \n stacktrace: $stacktrace');
       rethrow;
     }
   }
