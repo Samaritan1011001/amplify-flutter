@@ -133,7 +133,7 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
             this._callDispatcherInitialized = true
             
 
-            // TODO: Send the geofence events that occurred while the background isolate was initializing.
+            // TODO: Send the events that occurred while the background isolate was initializing.
             //            objc_sync_enter(self)
             //            initialized = true
             //            while this._eventQueue.count > 0 {
@@ -159,9 +159,9 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
     }
     
     
-    // public static func setPluginRegistrantCallback(_ completion:  FlutterPluginRegistrantCallback) {
-    //     registerPlugins = completion
-    // }
+     public static func setPluginRegistrantCallback(_ completion:  FlutterPluginRegistrantCallback) {
+         registerPlugins = completion
+     }
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         print("register is called: \(registrar)")
@@ -188,7 +188,8 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
         // callback dispatcher. This channel will be registered to listen for
         // method calls once the callback dispatcher is started.
         _callbackChannel = FlutterMethodChannel(name: "plugins.flutter.io/amplify_push_notification_plugin_background", binaryMessenger: _headlessRunner.binaryMessenger)
-        
+        print("Ending register method")
+
 
     }
     
@@ -203,8 +204,6 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
        
         let entrypoint = info.callbackName
         let uri = info.callbackLibraryPath
-        _ = _headlessRunner.run(withEntrypoint: entrypoint, libraryURI: uri)
-//        assert(registerPlugins != nil, "failed to set registerPlugins")
         
         // TODO: registerPlugins has to be initialized in flutter app's appdelegate.m
         // Once our headless runner has been started, we need to register the application's plugins
@@ -212,16 +211,17 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
         // a callback set from AppDelegate.m in the main application. This callback should register
         // all relevant plugins (excluding those which require UI).
         if !_backgroundIsolateRun {
-//            await registerPlugins()
-//            print("registerPlugins registered headless runner \(_headlessRunner.isolateId ?? "isolateId is nil")")
-            // registerPlugins(_headlessRunner)
+            _headlessRunner.run(withEntrypoint: entrypoint, libraryURI: uri)
            _headlessRunner.registrar(forPlugin: "SwiftAmplifyPushNotificationIosPlugin")!.addMethodCallDelegate(_instance, channel:_callbackChannel)
             
-            //            print("callback channel is added to method call delegate")
+            // Debugging the order
+//            registerPlugins(_headlessRunner)
+//            print("Adding method delegate to headless runner using registrar: \(_registrar)")
+//            _headlessRunner.run(withEntrypoint: entrypoint, libraryURI: uri)
+//            _registrar.addMethodCallDelegate(_instance, channel:_callbackChannel)
+
             
         }
-//        _registrar.addMethodCallDelegate(_instance, channel:_callbackChannel)
-//        print("callback channel is added to method call delegate")
         _backgroundIsolateRun = true
     }
     
@@ -235,12 +235,9 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
     static func setCallbackhandleForKey(handle: Int64, key: String) {
         _persistentState.set(NSNumber(value: handle), forKey: key)
     }
-    
-    
-    
+
     static func sendNotificationEventToDispatcher() {
         let handle = getCallbackHandleForkey(key: bgUserCallback)
-//        print("sendNotificationEventToDispatcher with _callbackChannel = \(_callbackChannel)")
         if handle != 0 && _callbackChannel != nil {
             print("Invoking callback dispatcher methodchannel")
             _callbackChannel.invokeMethod("", arguments: [
@@ -281,8 +278,6 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
             print("something went wrong with parsing json")
             return
         }
-//        SwiftAmplifyPushNotificationIosPlugin._launchNotification = remoteMessage
-//        print("received notificaiton on tap: \(SwiftAmplifyPushNotificationIosPlugin._launchNotification)")
         self.channel?.invokeMethod("NOTIFICATION_OPENED_APP", arguments: remoteMessage);
 
         completionHandler()
