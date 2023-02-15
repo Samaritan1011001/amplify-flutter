@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -23,22 +12,30 @@ import 'package:amplify_auth_cognito_dart/src/sdk/cognito_identity.dart'
     hide NotAuthorizedException;
 import 'package:amplify_auth_cognito_dart/src/sdk/cognito_identity_provider.dart'
     as cognito_idp;
-import 'package:amplify_auth_cognito_dart/src/state/machines/generated/fetch_auth_session_state_machine_base.dart';
 import 'package:amplify_auth_cognito_dart/src/state/state.dart';
 import 'package:amplify_core/amplify_core.dart';
-import 'package:stream_transform/stream_transform.dart';
 
 /// {@template amplify_auth_cognito.fetch_auth_session_state_machine}
 /// Fetches the user's auth session from the credential store and, optionally,
 /// a Cognito Identity Pool.
 /// {@endtemplate}
-class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
+class FetchAuthSessionStateMachine extends StateMachine<FetchAuthSessionEvent,
+    FetchAuthSessionState, AuthEvent, AuthState, CognitoAuthStateMachine> {
   /// {@macro amplify_auth_cognito.fetch_auth_session_state_machine}
-  FetchAuthSessionStateMachine(super.manager);
+  FetchAuthSessionStateMachine(CognitoAuthStateMachine manager)
+      : super(manager, type);
 
   /// The [FetchAuthSessionStateMachine] type.
-  static const type = StateMachineToken<FetchAuthSessionEvent,
-      FetchAuthSessionState, FetchAuthSessionStateMachine>();
+  static const type = StateMachineToken<
+      FetchAuthSessionEvent,
+      FetchAuthSessionState,
+      AuthEvent,
+      AuthState,
+      CognitoAuthStateMachine,
+      FetchAuthSessionStateMachine>();
+
+  @override
+  FetchAuthSessionState get initialState => const FetchAuthSessionState.idle();
 
   @override
   String get runtimeTypeName => 'FetchAuthSessionStateMachine';
@@ -55,19 +52,41 @@ class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
   /// The registered identity pool config
   CognitoIdentityCredentialsProvider? get _identityPoolConfig => get();
 
-  /// Gets the latest fetchAuthSession result.
-  Future<FetchAuthSessionSuccess?> getLatestResult() async {
-    // Wait for any pending events to be processed and their initial states to
-    // fire.
-    await Future<void>.delayed(Duration.zero);
-    final fetchState = await stream.startWith(currentState).firstWhere((state) {
-      return state is FetchAuthSessionSuccess ||
-          state is FetchAuthSessionFailure;
-    });
-    if (fetchState is FetchAuthSessionFailure) {
-      throw fetchState.exception;
+  @override
+  Future<void> resolve(FetchAuthSessionEvent event) async {
+    switch (event.type) {
+      case FetchAuthSessionEventType.fetch:
+        event as FetchAuthSessionFetch;
+        emit(const FetchAuthSessionState.fetching());
+        await onFetchAuthSession(event);
+        break;
+      case FetchAuthSessionEventType.federate:
+        event as FetchAuthSessionFederate;
+        emit(const FetchAuthSessionState.fetching());
+        await onFederate(event);
+        break;
+      case FetchAuthSessionEventType.refresh:
+        event as FetchAuthSessionRefresh;
+        emit(const FetchAuthSessionState.refreshing());
+        await onRefresh(event);
+        break;
+      case FetchAuthSessionEventType.succeeded:
+        event as FetchAuthSessionSucceeded;
+        emit(FetchAuthSessionState.success(event.session));
+        break;
+      case FetchAuthSessionEventType.failed:
+        event as FetchAuthSessionFailed;
+        emit(FetchAuthSessionState.failure(event.exception));
+        break;
     }
-    return fetchState as FetchAuthSessionSuccess;
+  }
+
+  @override
+  FetchAuthSessionState? resolveError(Object error, [StackTrace? st]) {
+    if (error is Exception) {
+      return FetchAuthSessionFailure(error);
+    }
+    return null;
   }
 
   /// Runs [fn] inside a zone which indicates the call originated from this
@@ -171,77 +190,93 @@ class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
     return expiration.difference(currentTime) <= threshold;
   }
 
-  @override
+  /// State machine callback for the [FetchAuthSessionFetch] event.
   Future<void> onFetchAuthSession(
     FetchAuthSessionFetch event,
   ) async {
     final options = event.options ?? const CognitoSessionOptions();
-    final result = await getOrCreate(CredentialStoreStateMachine.type)
-        .getCredentialsResult();
+    final result = await manager.loadCredentials();
 
-    final userPoolTokens = result.data.userPoolTokens;
+    final userPoolTokens = result.userPoolTokens;
     final accessTokenExpiration = userPoolTokens?.accessToken.claims.expiration;
     final idTokenExpiration = userPoolTokens?.idToken.claims.expiration;
-    // Only force refresh user pool tokens when we have tokens to refresh and
-    // we are not also refreshing AWS credentials.
-    final forceRefreshUserPoolTokens = userPoolTokens != null &&
-        options.forceRefresh &&
-        !options.getAWSCredentials;
+    final forceRefreshUserPoolTokens =
+        userPoolTokens != null && options.forceRefresh;
     final refreshUserPoolTokens = forceRefreshUserPoolTokens ||
         _isExpired(accessTokenExpiration) ||
         _isExpired(idTokenExpiration);
 
     final hasIdentityPool = _identityPoolConfig != null;
-    final awsCredentials = result.data.awsCredentials;
+    final awsCredentials = result.awsCredentials;
     final awsCredentialsExpiration = awsCredentials?.expiration;
-    // Only force a refresh of AWS credentials if `getAwsCredentials` is also
-    // true in order to allow the case of just refreshing the user pool tokens.
-    final forceRefreshAwsCredentials =
-        options.getAWSCredentials && options.forceRefresh;
-    final refreshAwsCredentials =
-        forceRefreshAwsCredentials || _isExpired(awsCredentialsExpiration);
-    final retrieveAwsCredentials =
-        awsCredentials == null && options.getAWSCredentials;
-    if ((refreshAwsCredentials || retrieveAwsCredentials) && !hasIdentityPool) {
-      throw const InvalidAccountTypeException.noIdentityPool(
-        recoverySuggestion:
-            'Register an identity pool using the CLI or set getAWSCredentials '
-            'to false',
-      );
-    }
+    final forceRefreshAwsCredentials = options.forceRefresh;
+    final retrieveAwsCredentials = awsCredentials == null;
+    final refreshAwsCredentials = hasIdentityPool &&
+        (retrieveAwsCredentials ||
+            forceRefreshAwsCredentials ||
+            _isExpired(awsCredentialsExpiration));
 
-    if (refreshUserPoolTokens ||
-        refreshAwsCredentials ||
-        retrieveAwsCredentials) {
-      dispatch(
+    if (refreshUserPoolTokens || refreshAwsCredentials) {
+      return resolve(
         FetchAuthSessionEvent.refresh(
           refreshUserPoolTokens: refreshUserPoolTokens,
-          refreshAwsCredentials:
-              refreshAwsCredentials || retrieveAwsCredentials,
+          refreshAwsCredentials: refreshAwsCredentials,
         ),
       );
-      return;
     }
 
     // If refresh is not needed, return data directly from storage
+    final AuthResult<AWSCredentials> credentialsResult;
+    final AuthResult<String> identityIdResult;
+    if (hasIdentityPool) {
+      // awsCredentials & identityId cannot be null if refreshAwsCredentials is
+      // false.
+      credentialsResult = AuthResult.success(awsCredentials!);
+      identityIdResult = AuthResult.success(result.identityId!);
+    } else {
+      credentialsResult = const AuthResult.error(
+        InvalidAccountTypeException.noIdentityPool(),
+      );
+      identityIdResult = const AuthResult.error(
+        InvalidAccountTypeException.noIdentityPool(),
+      );
+    }
+
+    final AuthResult<CognitoUserPoolTokens> userPoolTokensResult;
+    final AuthResult<String> userSubResult;
+    if (userPoolTokens == null) {
+      userPoolTokensResult = const AuthResult.error(
+        SignedOutException('No user is currently signed in'),
+      );
+      userSubResult = const AuthResult.error(
+        SignedOutException('No user is currently signed in'),
+      );
+    } else {
+      userPoolTokensResult = AuthResult.success(
+        userPoolTokens,
+      );
+      userSubResult = AuthResult.success(
+        userPoolTokens.userId,
+      );
+    }
+
     emit(
       FetchAuthSessionState.success(
         CognitoAuthSession(
           isSignedIn: userPoolTokens != null,
-          userPoolTokens: userPoolTokens,
-          credentials: awsCredentials,
-          userSub: userPoolTokens?.idToken.userId,
-          identityId: result.data.identityId,
+          userPoolTokensResult: userPoolTokensResult,
+          userSubResult: userSubResult,
+          credentialsResult: credentialsResult,
+          identityIdResult: identityIdResult,
         ),
       ),
     );
   }
 
-  @override
+  /// State machine callback for the [FetchAuthSessionFederate] event.
   Future<void> onFederate(FetchAuthSessionFederate event) async {
-    final result = await getOrCreate(CredentialStoreStateMachine.type)
-        .getCredentialsResult();
-    final userPoolTokens = result.data.userPoolTokens;
+    final result = await manager.loadCredentials();
+    final userPoolTokens = result.userPoolTokens;
     if (userPoolTokens != null) {
       throw const InvalidStateException(
         'Cannot federate to identity pool with active user session.',
@@ -250,67 +285,129 @@ class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
       );
     }
 
-    final awsCredentialsResult = await _retrieveAwsCredentials(
-      existingIdentityId: event.request.options?.developerProvidedIdentityId ??
-          result.data.identityId,
-      federatedIdentity: _FederatedIdentity(
-        event.request.provider,
-        event.request.token,
-      ),
-    );
-    dispatch(
-      FetchAuthSessionEvent.succeeded(
+    AuthResult<AWSCredentials> credentialsResult;
+    AuthResult<String> identityIdResult;
+
+    try {
+      final res = await _retrieveAwsCredentials(
+        existingIdentityId:
+            event.request.options?.developerProvidedIdentityId ??
+                result.identityId,
+        federatedIdentity: _FederatedIdentity(
+          event.request.provider,
+          event.request.token,
+        ),
+      );
+      credentialsResult = AuthResult.success(res.awsCredentials);
+      identityIdResult = AuthResult.success(res.identityId);
+    } on Exception catch (e, s) {
+      final authException = AuthException.fromException(e);
+      credentialsResult = AuthResult.error(authException, s);
+      identityIdResult = AuthResult.error(authException, s);
+    }
+
+    emit(
+      FetchAuthSessionState.success(
         CognitoAuthSession(
           isSignedIn: userPoolTokens != null,
-          userPoolTokens: userPoolTokens,
-          userSub: userPoolTokens?.userId,
-          identityId: awsCredentialsResult.identityId,
-          credentials: awsCredentialsResult.awsCredentials,
+          userPoolTokensResult: const AuthResult.error(
+            SignedOutException('No user is currently signed in'),
+          ),
+          userSubResult: const AuthResult.error(
+            SignedOutException('No user is currently signed in'),
+          ),
+          identityIdResult: identityIdResult,
+          credentialsResult: credentialsResult,
         ),
       ),
     );
   }
 
-  @override
+  /// State machine callback for the [FetchAuthSessionRefresh] event.
   Future<void> onRefresh(FetchAuthSessionRefresh event) async {
-    final result = await getOrCreate(CredentialStoreStateMachine.type)
-        .getCredentialsResult();
+    final result = await manager.loadCredentials();
 
-    var userPoolTokens = result.data.userPoolTokens;
-    var identityId = result.data.identityId;
-    var awsCredentials = result.data.awsCredentials;
+    AuthResult<CognitoUserPoolTokens> userPoolTokensResult;
+    AuthResult<String> userSubResult;
+    AuthResult<AWSCredentials> credentialsResult;
+    AuthResult<String> identityIdResult;
+
+    var userPoolTokens = result.userPoolTokens;
     if (event.refreshUserPoolTokens) {
       if (userPoolTokens == null) {
-        dispatch(
-          const FetchAuthSessionEvent.failed(
+        return emit(
+          const FetchAuthSessionState.failure(
             UnknownException(
               'No user pool tokens available for refresh',
             ),
           ),
         );
-        return;
       }
-      userPoolTokens = await _refreshUserPoolTokens(userPoolTokens);
-    }
-    if (event.refreshAwsCredentials) {
-      final idToken = userPoolTokens?.idToken.raw;
-      final awsCredentialsResult = await _retrieveAwsCredentials(
-        existingIdentityId: identityId,
-        federatedIdentity:
-            idToken == null ? null : _FederatedIdentity.cognito(idToken),
-      );
-      identityId = awsCredentialsResult.identityId;
-      awsCredentials = awsCredentialsResult.awsCredentials;
+      try {
+        userPoolTokens = await _refreshUserPoolTokens(userPoolTokens);
+        userPoolTokensResult = AuthResult.success(userPoolTokens);
+        userSubResult = AuthResult.success(userPoolTokens.userId);
+      } on Exception catch (e, s) {
+        final authException = AuthException.fromException(e);
+        userPoolTokensResult = AuthResult.error(authException, s);
+        userSubResult = AuthResult.error(authException, s);
+      }
+    } else {
+      if (userPoolTokens != null) {
+        userPoolTokensResult = AuthResult.success(userPoolTokens);
+        userSubResult = AuthResult.success(userPoolTokens.userId);
+      } else {
+        userPoolTokensResult = const AuthResult.error(
+          SignedOutException('No user is currently signed in'),
+        );
+        userSubResult = const AuthResult.error(
+          SignedOutException('No user is currently signed in'),
+        );
+      }
     }
 
-    dispatch(
-      FetchAuthSessionEvent.succeeded(
+    final existingIdentityId = result.identityId;
+    final existingAwsCredentials = result.awsCredentials;
+
+    final hasIdentityPool = _identityPoolConfig != null;
+
+    if (!hasIdentityPool) {
+      credentialsResult = const AuthResult<AWSCredentials>.error(
+        InvalidAccountTypeException.noIdentityPool(),
+      );
+      identityIdResult = const AuthResult<String>.error(
+        InvalidAccountTypeException.noIdentityPool(),
+      );
+    } else if (event.refreshAwsCredentials) {
+      final idToken = userPoolTokens?.idToken.raw;
+      try {
+        final awsCredentialsResult = await _retrieveAwsCredentials(
+          existingIdentityId: existingIdentityId,
+          federatedIdentity:
+              idToken == null ? null : _FederatedIdentity.cognito(idToken),
+        );
+        final identityId = awsCredentialsResult.identityId;
+        final awsCredentials = awsCredentialsResult.awsCredentials;
+        credentialsResult = AuthResult.success(awsCredentials);
+        identityIdResult = AuthResult.success(identityId);
+      } on Exception catch (e, s) {
+        final authException = AuthException.fromException(e);
+        credentialsResult = AuthResult.error(authException, s);
+        identityIdResult = AuthResult.error(authException, s);
+      }
+    } else {
+      credentialsResult = AuthResult.success(existingAwsCredentials!);
+      identityIdResult = AuthResult.success(existingIdentityId!);
+    }
+
+    emit(
+      FetchAuthSessionState.success(
         CognitoAuthSession(
           isSignedIn: userPoolTokens != null,
-          userPoolTokens: userPoolTokens,
-          userSub: userPoolTokens?.idToken.userId,
-          identityId: identityId,
-          credentials: awsCredentials,
+          userPoolTokensResult: userPoolTokensResult,
+          userSubResult: userSubResult,
+          identityIdResult: identityIdResult,
+          credentialsResult: credentialsResult,
         ),
       ),
     );
@@ -336,28 +433,22 @@ class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
         federatedIdentity: federatedIdentity,
       );
 
-      await dispatch(
-        CredentialStoreEvent.storeCredentials(
-          CredentialStoreData(
-            awsCredentials: awsCredentials,
-            identityId: identityId,
-          ),
+      await manager.storeCredentials(
+        CredentialStoreData(
+          awsCredentials: awsCredentials,
+          identityId: identityId,
         ),
       );
-      await getOrCreate(CredentialStoreStateMachine.type)
-          .getCredentialsResult();
 
       return _AwsCredentialsResult(awsCredentials, identityId);
-    } on NotAuthorizedException {
+    } on AuthNotAuthorizedException {
       // If expired credentials were cached and trying to refresh them throws
       // a NotAuthorizedException, clear any AWS credentials which were being
       // refreshed, since they may have been from an authenticated user whose
       // session expired in an identity pool not supporting unauthenticated
       // access and we should prevent further attempts at refreshing.
-      dispatch(
-        CredentialStoreEvent.clearCredentials(
-          CognitoIdentityPoolKeys(identityPoolConfig),
-        ),
+      await manager.clearCredentials(
+        CognitoIdentityPoolKeys(identityPoolConfig),
       );
       rethrow;
     }
@@ -367,7 +458,7 @@ class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
     CognitoUserPoolTokens userPoolTokens,
   ) async {
     final deviceSecrets = await getOrCreate(DeviceMetadataRepository.token)
-        .get(CognitoIdToken(userPoolTokens.idToken).username);
+        .get(userPoolTokens.username);
     final refreshRequest = cognito_idp.InitiateAuthRequest.build((b) {
       b
         ..authFlow = cognito_idp.AuthFlowType.refreshTokenAuth
@@ -402,18 +493,14 @@ class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
             : userPoolTokens.idToken,
       );
 
-      await dispatch(
-        CredentialStoreEvent.storeCredentials(
-          CredentialStoreData(
-            userPoolTokens: newTokens,
-          ),
+      await manager.storeCredentials(
+        CredentialStoreData(
+          userPoolTokens: newTokens,
         ),
       );
-      await getOrCreate(CredentialStoreStateMachine.type)
-          .getCredentialsResult();
 
       return newTokens;
-    } on NotAuthorizedException {
+    } on AuthNotAuthorizedException {
       late Iterable<String> keys;
       switch (userPoolTokens.signInMethod) {
         case CognitoSignInMethod.default$:
@@ -424,14 +511,12 @@ class FetchAuthSessionStateMachine extends FetchAuthSessionStateMachineBase {
           break;
       }
       final identityPoolConfig = _identityPoolConfig;
-      dispatch(
-        CredentialStoreEvent.clearCredentials([
-          ...keys,
-          if (identityPoolConfig != null)
-            // Clear associated AWS credentials
-            ...CognitoIdentityPoolKeys(identityPoolConfig),
-        ]),
-      );
+      await manager.clearCredentials([
+        ...keys,
+        if (identityPoolConfig != null)
+          // Clear associated AWS credentials
+          ...CognitoIdentityPoolKeys(identityPoolConfig),
+      ]);
       rethrow;
     }
   }

@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 import 'dart:convert' as convert;
@@ -556,6 +545,14 @@ class _Smithy {
   /// Creates a [smithy.ResponseContext] refererence.
   Reference get responseContext => const Reference('ResponseContext', _url);
 
+  /// Creates a [smithy.HttpRequestInterceptor] refererence.
+  Reference get httpRequestInterceptor =>
+      const Reference('HttpRequestInterceptor', _url);
+
+  /// Creates a [smithy.HttpResponseInterceptor] refererence.
+  Reference get httpResponseInterceptor =>
+      const Reference('HttpResponseInterceptor', _url);
+
   /// Creates a [smithy.HttpServer] refererence.
   Reference httpServer(Reference baseService) => TypeReference((t) => t
     ..symbol = 'HttpServer'
@@ -693,9 +690,21 @@ class _Smithy {
           ..types.add(ref),
       );
 
+  /// Creates a [smithy.SmithyIntEnum] reference for [ref], the enum class.
+  Reference smithyIntEnum(Reference ref) => TypeReference(
+        (t) => t
+          ..symbol = 'SmithyIntEnum'
+          ..url = _url
+          ..types.add(ref),
+      );
+
   /// Creates a [smithy.SmithyEnumSerializer] reference.
   Reference get smithyEnumSerializer =>
       const Reference('SmithyEnumSerializer', _url);
+
+  /// Creates a [smithy.SmithyIntEnumSerializer] reference.
+  Reference get smithyIntEnumSerializer =>
+      const Reference('SmithyIntEnumSerializer', _url);
 
   /// Creates a [smithy.SmithyError] reference.
   Reference get smithyError => const Reference('SmithyError', _url);

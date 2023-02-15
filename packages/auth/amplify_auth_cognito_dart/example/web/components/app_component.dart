@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -95,11 +84,8 @@ class AppComponent extends StatefulComponent {
       AuthState startingAuthState;
 
       try {
-        final session = await Amplify.Auth.fetchAuthSession(
-          options: const CognitoSessionOptions(
-            getAWSCredentials: true,
-          ),
-        ) as CognitoAuthSession;
+        final session =
+            await Amplify.Auth.fetchAuthSession() as CognitoAuthSession;
         startingAuthState =
             session.isSignedIn ? AuthState.authenticated : AuthState.login;
       } on Exception {
@@ -129,21 +115,23 @@ class AppComponent extends StatefulComponent {
 
   void _processSignInResult(SignInResult res) {
     if (!res.isSignedIn) {
-      switch (res.nextStep!.signInStep) {
-        case 'CONFIRM_SIGN_IN_WITH_SMS_MFA_CODE':
+      switch (res.nextStep.signInStep) {
+        case AuthSignInStep.confirmSignInWithSmsMfaCode:
           setState(() {
             appState = appState.copyWith(
               authState: AuthState.confirmSignin,
             );
           });
           return;
-        case 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD':
+        case AuthSignInStep.confirmSignInWithNewPassword:
           setState(() {
             appState = appState.copyWith(
               authState: AuthState.confirmNewPassword,
             );
           });
           return;
+        default:
+          break;
       }
     }
     setState(
@@ -157,7 +145,9 @@ class AppComponent extends StatefulComponent {
 
   Future<void> _fetchUnAuthCredentials() async {
     final session = await fetchAuthSession();
-    safePrint('sessionToken : ${session.credentials?.sessionToken}');
+    safePrint(
+      'sessionToken : ${session.credentialsResult.value.sessionToken}',
+    );
   }
 
   @override

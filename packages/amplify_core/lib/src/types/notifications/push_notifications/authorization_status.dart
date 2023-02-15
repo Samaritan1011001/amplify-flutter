@@ -14,7 +14,7 @@
  */
 
 enum PushPermissionRequestStatus {
-    granted,
-    denied,
-    undetermined,
+  granted,
+  denied,
+  undetermined,
 }

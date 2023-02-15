@@ -1,3 +1,17 @@
+## 0.3.1+2
+
+- Minor bug fixes and improvements
+
+## 0.3.1+1
+
+### Fixes
+- fix(sigv4): Allow custom `scheme` ([#2531](https://github.com/aws-amplify/amplify-flutter/pull/2531))
+
+## 0.3.1
+
+### Fixes
+- fix(sigv4): Path normalization with empty path
+
 ## 0.3.0
 
 ### Fixes

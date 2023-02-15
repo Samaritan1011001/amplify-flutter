@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 import 'dart:math';
@@ -23,7 +12,12 @@ import 'package:amplify_storage_s3_dart/src/storage_s3_service/transfer/transfer
     as transfer;
 import 'package:async/async.dart';
 import 'package:meta/meta.dart';
-import 'package:smithy/smithy.dart';
+import 'package:smithy/smithy.dart' as smithy;
+import 'package:smithy_aws/smithy_aws.dart' as smithy_aws;
+
+/// The fallback contentType.
+// https://www.iana.org/assignments/media-types/application/octet-stream
+const fallbackContentType = 'application/octet-stream';
 
 /// {@template amplify_storage_s3_dart.upload_task}
 /// A task created to fulfill an upload operation.
@@ -48,6 +42,7 @@ import 'package:smithy/smithy.dart';
 class S3UploadTask {
   S3UploadTask._({
     required s3.S3Client s3Client,
+    required smithy_aws.S3ClientConfig defaultS3ClientConfig,
     required S3PrefixResolver prefixResolver,
     required String bucket,
     required String key,
@@ -58,6 +53,7 @@ class S3UploadTask {
     required AWSLogger logger,
     required transfer.TransferDatabase transferDatabase,
   })  : _s3Client = s3Client,
+        _defaultS3ClientConfig = defaultS3ClientConfig,
         _prefixResolver = prefixResolver,
         _bucket = bucket,
         _key = key,
@@ -76,6 +72,7 @@ class S3UploadTask {
   S3UploadTask.fromDataPayload(
     S3DataPayload dataPayload, {
     required s3.S3Client s3Client,
+    required smithy_aws.S3ClientConfig defaultS3ClientConfig,
     required S3PrefixResolver prefixResolver,
     required String bucket,
     required String key,
@@ -85,6 +82,7 @@ class S3UploadTask {
     required transfer.TransferDatabase transferDatabase,
   }) : this._(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: prefixResolver,
           bucket: bucket,
           key: key,
@@ -101,6 +99,7 @@ class S3UploadTask {
   S3UploadTask.fromAWSFile(
     AWSFile localFile, {
     required s3.S3Client s3Client,
+    required smithy_aws.S3ClientConfig defaultS3ClientConfig,
     required S3PrefixResolver prefixResolver,
     required String bucket,
     required String key,
@@ -110,6 +109,7 @@ class S3UploadTask {
     required transfer.TransferDatabase transferDatabase,
   }) : this._(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: prefixResolver,
           bucket: bucket,
           key: key,
@@ -129,6 +129,7 @@ class S3UploadTask {
   final Completer<S3Item> _uploadCompleter = Completer();
 
   final s3.S3Client _s3Client;
+  final smithy_aws.S3ClientConfig _defaultS3ClientConfig;
   final S3PrefixResolver _prefixResolver;
   final String _bucket;
   final String _key;
@@ -145,19 +146,19 @@ class S3UploadTask {
   late final String _resolvedKey;
 
   // fields used to manage the single upload process
-  SmithyOperation<s3.PutObjectOutput>? _putObjectOperation;
+  smithy.SmithyOperation<s3.PutObjectOutput>? _putObjectOperation;
 
   // fields used to manage the multipart upload process
   late final ChunkedStreamReader<int> _fileReader;
   late final StreamController<_CompletedSubtask> _subtasksStreamController;
   late final StreamSubscription<_CompletedSubtask> _subtasksStreamSubscription;
-  late final int _fileSize;
   late final int _lastPartSize;
   late final String _multipartUploadId;
   late final int _expectedNumOfSubtasks;
   final _ongoingSubtasks = <int, _OngoingSubtask>{};
   final _ongoingUploadPartHttpOperations = <int, _OngoingUploadPartOperation>{};
   final _completedSubtasks = <_CompletedSubtask>[];
+  int _fileSize = -1;
   int _transferredBytes = 0;
   int _currentSubTaskId = 0;
   final Completer<void> _determineUploadModeCompleter = Completer();
@@ -213,7 +214,7 @@ class S3UploadTask {
           _startPutObject(
             S3DataPayload.streaming(
               localFile.stream,
-              contentType: localFile.contentType,
+              contentType: await localFile.contentType,
             ),
           ),
         );
@@ -302,16 +303,21 @@ class S3UploadTask {
       builder
         ..bucket = _bucket
         ..body = body
-        ..contentType = body.contentType
+        ..contentType = body.contentType ?? fallbackContentType
         ..key = _resolvedKey
         ..metadata.addAll(_options.metadata ?? const {});
     });
 
     try {
-      _putObjectOperation = _s3Client.putObject(putObjectRequest);
+      _putObjectOperation = _s3Client.putObject(
+        putObjectRequest,
+        s3ClientConfig: _defaultS3ClientConfig.copyWith(
+          useAcceleration: _options.useAccelerateEndpoint,
+        ),
+      );
 
       _putObjectOperation!.requestProgress.listen((bytesSent) {
-        _transferredBytes += bytesSent;
+        _transferredBytes = bytesSent;
         _emitTransferProgress();
       });
 
@@ -338,7 +344,7 @@ class S3UploadTask {
       _uploadCompleter
           .completeError(S3Exception.controllableOperationCanceled());
       _emitTransferProgress();
-    } on UnknownSmithyHttpException catch (error, stackTrace) {
+    } on smithy.UnknownSmithyHttpException catch (error, stackTrace) {
       _completeUploadWithError(
         S3Exception.fromUnknownSmithyHttpException(error),
         stackTrace,
@@ -448,10 +454,11 @@ class S3UploadTask {
   }
 
   Future<void> _createMultiPartUpload(AWSFile localFile) async {
+    final contentType = await localFile.contentType;
     final request = s3.CreateMultipartUploadRequest.build((builder) {
       builder
         ..bucket = _bucket
-        ..contentType = localFile.contentType
+        ..contentType = contentType ?? fallbackContentType
         ..key = _resolvedKey
         ..metadata.addAll(_options.metadata ?? const {});
     });
@@ -474,7 +481,7 @@ class S3UploadTask {
         );
         _multipartUploadId = uploadId;
       }
-    } on UnknownSmithyHttpException catch (error) {
+    } on smithy.UnknownSmithyHttpException catch (error) {
       throw S3Exception.fromUnknownSmithyHttpException(error);
     }
   }
@@ -508,7 +515,7 @@ class S3UploadTask {
     try {
       await _s3Client.completeMultipartUpload(request).result;
       await _transferDatabase.deleteTransferRecords(_multipartUploadId);
-    } on UnknownSmithyHttpException catch (error) {
+    } on smithy.UnknownSmithyHttpException catch (error) {
       // TODO(HuiSF): verify if s3Client sdk throws different exception type
       //  wrapping errors extracted from a 200 response.
       throw S3Exception.fromUnknownSmithyHttpException(error);
@@ -595,7 +602,12 @@ class S3UploadTask {
     });
 
     try {
-      final operation = _s3Client.uploadPart(request);
+      final operation = _s3Client.uploadPart(
+        request,
+        s3ClientConfig: _defaultS3ClientConfig.copyWith(
+          useAcceleration: _options.useAccelerateEndpoint,
+        ),
+      );
       _ongoingUploadPartHttpOperations[partNumber] =
           _OngoingUploadPartOperation(
         partNumber: partNumber,
@@ -617,7 +629,7 @@ class S3UploadTask {
             partNumber == _expectedNumOfSubtasks ? _lastPartSize : _minPartSize,
         eTag: eTag,
       );
-    } on UnknownSmithyHttpException catch (error) {
+    } on smithy.UnknownSmithyHttpException catch (error) {
       throw S3Exception.fromUnknownSmithyHttpException(error);
     } on s3.NoSuchUpload catch (error) {
       throw S3Exception.fromS3NoSuchUpload(error);
@@ -738,5 +750,5 @@ class _OngoingUploadPartOperation {
   });
 
   final int partNumber;
-  final SmithyOperation<s3.UploadPartOutput> smithyOperation;
+  final smithy.SmithyOperation<s3.UploadPartOutput> smithyOperation;
 }

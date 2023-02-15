@@ -1,3 +1,21 @@
+## 1.0.0-next.4
+
+### Features
+- feat(analytics): Legacy data migration of Pinpoint Endpoint ID ([#2489](https://github.com/aws-amplify/amplify-flutter/pull/2489))
+
+## 1.0.0-next.3
+
+### Fixes
+- fix(analytics): Secure storage on Android ([#2530](https://github.com/aws-amplify/amplify-flutter/pull/2530))
+
+## 1.0.0-next.2
+
+- Minor bug fixes and improvements
+
+## 1.0.0-next.1+1
+
+- Minor bug fixes and improvements
+
 ## 1.0.0-next.1
 
 ### Breaking Changes

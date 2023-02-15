@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -21,35 +10,12 @@ import 'package:amplify_auth_cognito_dart/src/model/auth_configuration.dart';
 import 'package:amplify_auth_cognito_dart/src/sdk/cognito_identity_provider.dart';
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_secure_storage_dart/amplify_secure_storage_dart.dart';
-import 'package:mockito/mockito.dart';
-import 'package:smithy/smithy.dart';
 import 'package:test/test.dart';
 
+import '../common/matchers.dart';
+import '../common/mock_clients.dart';
 import '../common/mock_config.dart';
 import '../common/mock_secure_storage.dart';
-
-final throwsSignedOutException = throwsA(isA<SignedOutException>());
-
-class MockCognitoIdpClient extends Fake
-    implements CognitoIdentityProviderClient {
-  MockCognitoIdpClient(this._deleteUser);
-
-  final Future<void> Function() _deleteUser;
-
-  @override
-  SmithyOperation<void> deleteUser(
-    DeleteUserRequest input, {
-    AWSHttpClient? client,
-  }) =>
-      SmithyOperation(
-        CancelableOperation.fromFuture(
-          Future.value(_deleteUser()),
-        ),
-        operationName: 'GetId',
-        requestProgress: const Stream.empty(),
-        responseProgress: const Stream.empty(),
-      );
-}
 
 void main() {
   final authConfig = AuthConfiguration.fromConfig(mockConfig.auth!.awsPlugin!);
@@ -86,8 +52,9 @@ void main() {
       Amplify.Hub.listen(HubChannel.Auth, hubEventsController.add);
     });
 
-    tearDown(() {
+    tearDown(() async {
       Amplify.Hub.close();
+      await Amplify.reset();
     });
 
     group('deleteUser', () {
@@ -96,9 +63,10 @@ void main() {
           config: mockConfig,
           authProviderRepo: testAuthRepo,
         );
-        await expectLater(plugin.deleteUser(), throwsSignedOutException);
 
         expect(hubEvents, neverEmits(userDeletedEvent));
+        await expectLater(plugin.deleteUser(), throwsSignedOutException);
+
         unawaited(hubEventsController.close());
       });
 
@@ -113,12 +81,14 @@ void main() {
           authProviderRepo: testAuthRepo,
         );
 
-        final mockIdp = MockCognitoIdpClient(() async {});
+        final mockIdp = MockCognitoIdentityProviderClient(
+          deleteUser: () async {},
+        );
         stateMachine.addInstance<CognitoIdentityProviderClient>(mockIdp);
 
-        await expectLater(plugin.getCredentials(), completes);
+        await expectLater(plugin.getUserPoolTokens(), completes);
         await expectLater(plugin.deleteUser(), completes);
-        expect(plugin.getCredentials(), throwsSignedOutException);
+        expect(plugin.getUserPoolTokens(), throwsSignedOutException);
         expect(hubEvents, emitsThrough(userDeletedEvent));
       });
 
@@ -133,14 +103,16 @@ void main() {
           authProviderRepo: testAuthRepo,
         );
 
-        final mockIdp = MockCognitoIdpClient(() async {
-          throw InternalErrorException();
-        });
+        final mockIdp = MockCognitoIdentityProviderClient(
+          deleteUser: () async {
+            throw InternalErrorException();
+          },
+        );
         stateMachine.addInstance<CognitoIdentityProviderClient>(mockIdp);
 
-        await expectLater(plugin.getCredentials(), completes);
+        await expectLater(plugin.getUserPoolTokens(), completes);
         await expectLater(plugin.deleteUser(), throwsA(isA<Exception>()));
-        expect(plugin.getCredentials(), completes);
+        expect(plugin.getUserPoolTokens(), completes);
         expect(hubEvents, neverEmits(userDeletedEvent));
         unawaited(hubEventsController.close());
       });

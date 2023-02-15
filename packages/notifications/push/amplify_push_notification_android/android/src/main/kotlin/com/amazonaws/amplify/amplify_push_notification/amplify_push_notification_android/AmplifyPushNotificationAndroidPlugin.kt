@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.NonNull
@@ -15,7 +16,9 @@ import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import com.amazonaws.amplify.AtomicResult
 import com.amplifyframework.core.Amplify
+import com.amplifyframework.pushnotifications.pinpoint.utils.permissions.PushNotificationPermission
 import com.amplifyframework.pushnotifications.pinpoint.utils.PushNotificationsUtils
+import com.amplifyframework.pushnotifications.pinpoint.utils.permissions.PermissionRequestResult
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -28,8 +31,18 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 //import com.amplifyframework.pushnotifications.pinpoint.utils
+
+enum class PushNotificationPermissionStatus(val value: String) {
+    GRANTED("granted"),
+    DENIED("denied"),
+    UNDETERMINED("undetermined"),
+}
 
 /** AmplifyPushNotificationAndroidPlugin */
 class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.NewIntentListener, PluginRegistry.RequestPermissionsResultListener  {
@@ -40,6 +53,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
     private val LOG = Amplify.Logging.forNamespace("amplify:flutter:push_notification_plugin")
     private var activityBinding: ActivityPluginBinding? = null
     private var launchNotification: RemoteMessage? = null
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 
     companion object {
         @JvmStatic
@@ -85,28 +99,31 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
             }
             "requestMessagingPermission" -> {
                 LOG.info("Asking for permission ")
-//        mainActivity!!.startActivity(Intent(context, PermissionActivity::class.java))
-                askNotificationPermission()
-                result.success(null)
+
+                scope.launch {
+                    val res = PushNotificationPermission(context).requestPermission()
+                    if (res is PermissionRequestResult.Granted) {
+                        result.success(PushNotificationPermissionStatus.GRANTED.value)
+                    } else {
+                        result.success(PushNotificationPermissionStatus.DENIED.value)
+                    }
+                }
+            }
+            "getPermissionStatus" -> {
+                LOG.info("getting permission status")
+                val res = PushNotificationPermission(context).hasRequiredPermission
+                if (res) {
+                    result.success(PushNotificationPermissionStatus.GRANTED.value)
+                } else {
+                    result.success(PushNotificationPermissionStatus.DENIED.value)
+                }
             }
             "getToken" -> {
-
                 LOG.info("getting token ")
-                FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-                    if (!task.isSuccessful) {
-                        LOG.info("Fetching FCM registration token failed")
-                        return@OnCompleteListener
-                    }
-
-                    // Get new FCM registration token
-                    val token = task.result
-                    result.success(token)
-
-                })
+                fetchToken(result)
             }
             "getLaunchNotification" -> {
                 LOG.info("Fetching launch notification")
-                askNotificationPermission()
                 if(launchNotification !=null) {
                     val remoteMessageBundle = getBundleFromRemoteMessage(launchNotification!!)
                     val notificationDataJson = convertBundleToJson(remoteMessageBundle)
@@ -134,7 +151,30 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
         }
     }
 
+    private fun fetchToken(result: Result?){
 
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                LOG.info("Fetching FCM registration token failed")
+                return@OnCompleteListener
+            }
+            // Get new FCM registration token
+            val token = task.result
+            if(result!=null){
+                result.success(token)
+            }else{
+                val tokenDataJson = JSONObject()
+                tokenDataJson.apply {
+                    put("token", token)
+                }
+//                PushNotificationEventManager.sendEvent(
+//                    PushNotificationEventType.NEW_TOKEN,
+//                    tokenDataJson
+//                )
+            }
+        })
+
+    }
     // Declare the launcher at the top of your Activity/Fragment:
 //    private val requestPermissionLauncher = ActivityCompat.registerForActivityResult(
 //        ActivityResultContracts.RequestPermission()
@@ -233,6 +273,7 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
     override fun onAttachedToEngine(
         @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
     ) {
+        Log.d(TAG, "attached to Engine $flutterPluginBinding")
 
         channel = MethodChannel(
             flutterPluginBinding.binaryMessenger,
@@ -240,13 +281,19 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
         )
         channel.setMethodCallHandler(this)
         context = flutterPluginBinding.applicationContext
-        PushNotificationEventManager.initializeWithMethodChannel(channel)
+//        PushNotificationEventManager.initializeWithMethodChannel(channel)
+        fetchToken(null)
 
 //      DEBUG: uncomment to debug app killed state use cases
 //      val spInstance = context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
 //      var counter = spInstance.getInt("notificationTappedCounter", -1)
 //      Log.d(TAG, "notificationTappedCounter on app launch $counter")
     }
+
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+//
+//    }
 
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -256,7 +303,6 @@ class AmplifyPushNotificationAndroidPlugin : FlutterPlugin, ActivityAware, Metho
 
         val appOpeningIntent = binding.activity.intent
         checkAppOpeningIntentAndEnqueueWork(appOpeningIntent, true)
-
         activityBinding = binding
     }
 

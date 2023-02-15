@@ -1,28 +1,21 @@
-/*
- * Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:retry/retry.dart';
 
-/// Configuration options for GraphQL Subscriptions and their WebSockets.
+/// {@template amplify_core.graphql.graphql_subscription_options}
+/// Configuration options for GraphQL subscriptions and their WebSockets.
+/// {@endtemplate}
 class GraphQLSubscriptionOptions {
-  /// Configure the ping interval for AppSync polling for subscription connections.
-  final Duration? pingInterval;
+  /// {@macro amplify_core.graphql.graphql_subscription_options}
+  const GraphQLSubscriptionOptions({
+    this.pollInterval = const Duration(seconds: 30),
+    this.retryOptions = const RetryOptions(),
+  });
 
-  /// Configure the exponential retry strategy options
-  /// see: https://pub.dev/documentation/retry/latest/retry/RetryOptions-class.html
-  final RetryOptions? retryOptions;
+  /// The interval for polling AppSync to monitor connection health.
+  final Duration pollInterval;
 
-  const GraphQLSubscriptionOptions({this.pingInterval, this.retryOptions});
+  /// The strategy for retrying when there is a connection failure.
+  final RetryOptions retryOptions;
 }

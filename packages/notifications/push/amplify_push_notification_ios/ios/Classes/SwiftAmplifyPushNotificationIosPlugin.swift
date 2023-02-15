@@ -47,6 +47,25 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
         self._result = result
         let this = SwiftAmplifyPushNotificationIosPlugin.self
         switch method {
+        case "getPermissionStatus": do {
+            UNUserNotificationCenter.current().getNotificationSettings { notificaitonSettings in
+                print("UNNotificationSettings.authorizationStatus \(notificaitonSettings.authorizationStatus == .notDetermined)")
+                if notificaitonSettings.authorizationStatus == .authorized {
+                    result("granted")
+
+                }else if notificaitonSettings.authorizationStatus == .denied{
+                    result("denied")
+
+                }else if notificaitonSettings.authorizationStatus == .notDetermined{
+                    result("undetermined")
+
+                }else{
+                    result("undetermined")
+
+                }
+
+            }
+        }
         case "requestMessagingPermission": do {
             guard let args = callArgs as? String else {
                     result(FlutterError(code: "ERROR", message: "Invalid arguments", details: nil))
@@ -67,12 +86,12 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
             
                 UNUserNotificationCenter.current().requestAuthorization(options: options) { granted, error in
                     if granted {
-                            result(true)
+                            result("granted")
                         } else {
                             if let error = error {
                                 result(FlutterError(code: "ERROR", message: error.localizedDescription, details: nil))
                             } else {
-                                result(false)
+                                result("denied")
                             }
                         }
                 }
@@ -140,9 +159,9 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
     }
     
     
-    public static func setPluginRegistrantCallback(_ completion:  FlutterPluginRegistrantCallback) {
-        registerPlugins = completion
-    }
+    // public static func setPluginRegistrantCallback(_ completion:  FlutterPluginRegistrantCallback) {
+    //     registerPlugins = completion
+    // }
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         print("register is called: \(registrar)")
@@ -195,8 +214,8 @@ public class SwiftAmplifyPushNotificationIosPlugin: NSObject, FlutterPlugin {
         if !_backgroundIsolateRun {
 //            await registerPlugins()
 //            print("registerPlugins registered headless runner \(_headlessRunner.isolateId ?? "isolateId is nil")")
-            registerPlugins(_headlessRunner)
-//            _headlessRunner.registrar(forPlugin: "SwiftAmplifyPushNotificationIosPlugin")!.addMethodCallDelegate(_instance, channel:_callbackChannel)
+            // registerPlugins(_headlessRunner)
+           _headlessRunner.registrar(forPlugin: "SwiftAmplifyPushNotificationIosPlugin")!.addMethodCallDelegate(_instance, channel:_callbackChannel)
             
             //            print("callback channel is added to method call delegate")
             

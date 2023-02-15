@@ -1,3 +1,40 @@
+## 1.0.0-next.4
+
+### Fixes
+- fix(api): do not include null values in ModelMutations.create ([#2504](https://github.com/aws-amplify/amplify-flutter/pull/2504))
+- fix(api): model helpers use targetNames in schemas with CPK enabled ([#2559](https://github.com/aws-amplify/amplify-flutter/pull/2559))
+
+## 1.0.0-next.3
+
+### Breaking Changes
+- refactor(auth)!: Align exception types
+- refactor(core)!: Migrate exception types
+
+### Fixes
+- fix(api): SubscriptionDataPayload error decoding type fix ([#2483](https://github.com/aws-amplify/amplify-flutter/pull/2483))
+- fix(api): improve GQL subscription error visibility/recovery ([#2507](https://github.com/aws-amplify/amplify-flutter/pull/2507))
+- fix(api): prevent GQL subscription race condition error after shutdown ([#2494](https://github.com/aws-amplify/amplify-flutter/pull/2494))
+
+## 1.0.0-next.2+1
+
+### Fixes
+- fix(api): Race condition at bloc close
+
+## 1.0.0-next.2
+
+### Breaking Changes
+- feat(api)!: Web Socket State Machine  ([#2458](https://github.com/aws-amplify/amplify-flutter/pull/2458))
+
+### Fixes
+- fix(api): support multiple belongsTo ([#2087](https://github.com/aws-amplify/amplify-flutter/pull/2087))
+
+## 1.0.0-next.1+1
+
+### Fixes
+- fix(api): allow setting extra GQL request params from model helpers ([#2423](https://github.com/aws-amplify/amplify-flutter/pull/2423))
+- fix(api): fix subscription race condition from previous connection close ([#2405](https://github.com/aws-amplify/amplify-flutter/pull/2405))
+- fix(api): Missing query parameters in REST operations ([#2413](https://github.com/aws-amplify/amplify-flutter/pull/2413))
+
 ## 1.0.0-next.1
 
 ### Breaking Changes

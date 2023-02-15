@@ -10,7 +10,9 @@ enum class PushNotificationEventType(val prefixedValue: String) {
     BACKGROUND_MESSAGE_RECEIVED("${PREFIX}BackgroundMessageReceived"),
     FOREGROUND_MESSAGE_RECEIVED("${PREFIX}ForegroundMessageReceived"),
     NOTIFICATION_OPENED_APP("${PREFIX}NotificationOpenedApp"),
-    NEW_TOKEN("${PREFIX}NewToken")
+    NEW_TOKEN("${PREFIX}NewToken"),
+    REQUEST_PERMISSION_RESULT("${PREFIX}RequestPermissionResult")
+
 }
 
 class PushNotificationEvent(val type: PushNotificationEventType, val params: JSONObject?)

@@ -1,3 +1,44 @@
+## 0.5.0
+
+### Fixes
+- fix(auth): Clear credentials before redirect on Web ([#2603](https://github.com/aws-amplify/amplify-flutter/pull/2603))
+- fix(auth): Refresh token in non-state machine calls ([#2572](https://github.com/aws-amplify/amplify-flutter/pull/2572))
+- fix(auth): SessionExpired Auth Hub event ([#2609](https://github.com/aws-amplify/amplify-flutter/pull/2609))
+
+### Breaking Changes
+- fix(auth)!: Fetch Auth Session offline behavior ([#2585](https://github.com/aws-amplify/amplify-flutter/pull/2585))
+
+## 0.4.0
+
+### Breaking Changes
+- chore(auth)!: Remove `isPreferPrivateSession` from `CognitoSignOutWithWebUIOptions` ([#2538](https://github.com/aws-amplify/amplify-flutter/pull/2538))
+- refactor(auth)!: Align exception types
+- refactor(auth)!: Make SRP failures errors
+- refactor(auth)!: Remove intermediate request types ([#2475](https://github.com/aws-amplify/amplify-flutter/pull/2475))
+
+## 0.3.1
+
+### Fixes
+- fix(auth): Add `no-store` cache control header
+
+## 0.3.0
+
+### Fixes
+- fix(auth): Can't resubmit verification code ([#2468](https://github.com/aws-amplify/amplify-flutter/pull/2468))
+- fix(auth): globalSignOut failure case
+
+### Breaking Changes
+- chore(auth)!: Make sign in result's `nextStep` non-null ([#2462](https://github.com/aws-amplify/amplify-flutter/pull/2462))
+- feat(auth)!: Support partial sign out cases ([#2436](https://github.com/aws-amplify/amplify-flutter/pull/2436))
+
+### Features
+- feat(auth): Add user ID to `CognitoSignUpResult` ([#2437](https://github.com/aws-amplify/amplify-flutter/pull/2437))
+
+## 0.2.5
+
+### Fixes
+- fix(auth): Refresh tokens when either access or ID token expires ([#2401](https://github.com/aws-amplify/amplify-flutter/pull/2401))
+
 ## 0.2.4
 
 ### Fixes

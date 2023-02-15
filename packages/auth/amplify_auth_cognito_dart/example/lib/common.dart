@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
 
@@ -63,7 +52,7 @@ Future<ResetPasswordResult> resetPassword({
   return Amplify.Auth.resetPassword(username: username);
 }
 
-Future<UpdatePasswordResult> confirmResetPassword({
+Future<ResetPasswordResult> confirmResetPassword({
   required String username,
   required String newPassword,
   required String confirmationCode,
@@ -86,11 +75,7 @@ Future<void> changePassword({
 }
 
 Future<CognitoAuthSession> fetchAuthSession() async {
-  final res = await Amplify.Auth.fetchAuthSession(
-    options: const CognitoSessionOptions(
-      getAWSCredentials: true,
-    ),
-  );
+  final res = await Amplify.Auth.fetchAuthSession();
   return res as CognitoAuthSession;
 }
 
@@ -111,7 +96,7 @@ Future<void> forgetDevice() async {
 }
 
 Future<UpdateUserAttributeResult> updateUserAttribute({
-  required UserAttributeKey key,
+  required AuthUserAttributeKey key,
   required String value,
   CognitoUpdateUserAttributeOptions? options,
 }) async {
@@ -122,7 +107,8 @@ Future<UpdateUserAttributeResult> updateUserAttribute({
   );
 }
 
-Future<Map<UserAttributeKey, UpdateUserAttributeResult>> updateUserAttributes({
+Future<Map<AuthUserAttributeKey, UpdateUserAttributeResult>>
+    updateUserAttributes({
   required List<AuthUserAttribute> attributes,
   CognitoUpdateUserAttributesOptions? options,
 }) async {
@@ -133,7 +119,7 @@ Future<Map<UserAttributeKey, UpdateUserAttributeResult>> updateUserAttributes({
 }
 
 Future<ConfirmUserAttributeResult> confirmUserAttribute({
-  required UserAttributeKey key,
+  required AuthUserAttributeKey key,
   required String confirmationCode,
 }) async {
   return Amplify.Auth.confirmUserAttribute(
@@ -144,7 +130,7 @@ Future<ConfirmUserAttributeResult> confirmUserAttribute({
 
 Future<ResendUserAttributeConfirmationCodeResult>
     resendUserAttributeConfirmationCode({
-  required UserAttributeKey key,
+  required AuthUserAttributeKey key,
   CognitoResendUserAttributeConfirmationCodeOptions? options,
 }) async {
   return Amplify.Auth.resendUserAttributeConfirmationCode(

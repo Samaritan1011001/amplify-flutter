@@ -1,18 +1,4 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Generated with smithy-dart 0.2.0. DO NOT MODIFY.
+// Generated with smithy-dart 0.3.1. DO NOT MODIFY.
 
 library amplify_auth_cognito_dart.cognito_identity_provider.cognito_identity_provider_client; // ignore_for_file: no_leading_underscores_for_library_prefixes
 
@@ -163,11 +149,16 @@ class CognitoIdentityProviderClient {
     _i1.AWSHttpClient? client,
     required String region,
     Uri? baseUri,
-    required _i2.AWSCredentialsProvider credentialsProvider,
+    _i2.AWSCredentialsProvider credentialsProvider =
+        const _i2.AWSCredentialsProvider.environment(),
+    List<_i3.HttpRequestInterceptor> requestInterceptors = const [],
+    List<_i3.HttpResponseInterceptor> responseInterceptors = const [],
   })  : _client = client,
         _region = region,
         _baseUri = baseUri,
-        _credentialsProvider = credentialsProvider;
+        _credentialsProvider = credentialsProvider,
+        _requestInterceptors = requestInterceptors,
+        _responseInterceptors = responseInterceptors;
 
   final _i1.AWSHttpClient? _client;
 
@@ -176,6 +167,10 @@ class CognitoIdentityProviderClient {
   final Uri? _baseUri;
 
   final _i2.AWSCredentialsProvider _credentialsProvider;
+
+  final List<_i3.HttpRequestInterceptor> _requestInterceptors;
+
+  final List<_i3.HttpResponseInterceptor> _responseInterceptors;
 
   /// Begins setup of time-based one-time password (TOTP) multi-factor authentication (MFA) for a user, with a unique private key that Amazon Cognito generates and returns in the API response. You can authorize an `AssociateSoftwareToken` request with either the user's access token, or a session string from a challenge response that you received from Amazon Cognito.
   ///
@@ -186,11 +181,14 @@ class CognitoIdentityProviderClient {
       associateSoftwareToken(
     _i5.AssociateSoftwareTokenRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i6.AssociateSoftwareTokenOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -201,11 +199,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i7.ChangePasswordResponse> changePassword(
     _i8.ChangePasswordRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i9.ChangePasswordOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -216,11 +217,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i10.ConfirmDeviceResponse> confirmDevice(
     _i11.ConfirmDeviceRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i12.ConfirmDeviceOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -231,11 +235,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i13.ConfirmForgotPasswordResponse> confirmForgotPassword(
     _i14.ConfirmForgotPasswordRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i15.ConfirmForgotPasswordOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -246,11 +253,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i16.ConfirmSignUpResponse> confirmSignUp(
     _i17.ConfirmSignUpRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i18.ConfirmSignUpOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -261,11 +271,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<void> deleteUser(
     _i19.DeleteUserRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i20.DeleteUserOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -276,11 +289,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<void> forgetDevice(
     _i21.ForgetDeviceRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i22.ForgetDeviceOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -295,11 +311,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i23.ForgotPasswordResponse> forgotPassword(
     _i24.ForgotPasswordRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i25.ForgotPasswordOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -310,11 +329,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i26.GetDeviceResponse> getDevice(
     _i27.GetDeviceRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i28.GetDeviceOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -325,11 +347,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i29.GetUserResponse> getUser(
     _i30.GetUserRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i31.GetUserOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -345,26 +370,32 @@ class CognitoIdentityProviderClient {
       getUserAttributeVerificationCode(
     _i33.GetUserAttributeVerificationCodeRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i34.GetUserAttributeVerificationCodeOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
     );
   }
 
-  /// Signs out users from all devices. It also invalidates all refresh tokens that Amazon Cognito has issued to a user. The user's current access and ID tokens remain valid until their expiry. By default, access and ID tokens expire one hour after Amazon Cognito issues them. A user can still use a hosted UI cookie to retrieve new tokens for the duration of the cookie validity period of 1 hour.
+  /// Signs out users from all devices. It also invalidates all refresh tokens that Amazon Cognito has issued to a user. A user can still use a hosted UI cookie to retrieve new tokens for the duration of the 1-hour cookie validity period.
   _i3.SmithyOperation<_i35.GlobalSignOutResponse> globalSignOut(
     _i36.GlobalSignOutRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i37.GlobalSignOutOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -379,11 +410,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i38.InitiateAuthResponse> initiateAuth(
     _i39.InitiateAuthRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i40.InitiateAuthOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -394,11 +428,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i41.ListDevicesResponse> listDevices(
     _i42.ListDevicesRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i43.ListDevicesOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -414,11 +451,14 @@ class CognitoIdentityProviderClient {
       resendConfirmationCode(
     _i45.ResendConfirmationCodeRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i46.ResendConfirmationCodeOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -434,26 +474,32 @@ class CognitoIdentityProviderClient {
       respondToAuthChallenge(
     _i48.RespondToAuthChallengeRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i49.RespondToAuthChallengeOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
     );
   }
 
-  /// Revokes all of the access tokens generated by the specified refresh token. After the token is revoked, you can't use the revoked token to access Amazon Cognito authenticated APIs.
+  /// Revokes all of the access tokens generated by, and at the same time as, the specified refresh token. After a token is revoked, you can't use the revoked token to access Amazon Cognito user APIs, or to authorize access to your resource server.
   _i3.SmithyOperation<_i50.RevokeTokenResponse> revokeToken(
     _i51.RevokeTokenRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i52.RevokeTokenOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -468,11 +514,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i53.SignUpResponse> signUp(
     _i54.SignUpRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i55.SignUpOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -483,11 +532,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i56.UpdateDeviceStatusResponse> updateDeviceStatus(
     _i57.UpdateDeviceStatusRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i58.UpdateDeviceStatusOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -502,11 +554,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i59.UpdateUserAttributesResponse> updateUserAttributes(
     _i60.UpdateUserAttributesRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i61.UpdateUserAttributesOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -517,11 +572,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i62.VerifySoftwareTokenResponse> verifySoftwareToken(
     _i63.VerifySoftwareTokenRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i64.VerifySoftwareTokenOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -534,11 +592,14 @@ class CognitoIdentityProviderClient {
   _i3.SmithyOperation<_i65.VerifyUserAttributeResponse> verifyUserAttribute(
     _i66.VerifyUserAttributeRequest input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i67.VerifyUserAttributeOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,

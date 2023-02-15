@@ -59,6 +59,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   PushPermissionRequestStatus? pushPermissionRequestStatus;
+  String? onTokenReceivedMessage;
+
   RemotePushMessage? foregroundMessage;
   RemotePushMessage? backgroundMessage;
   RemotePushMessage? notificationOpenedMessage;
@@ -69,6 +71,8 @@ class _MyAppState extends State<MyApp> {
   int globalBgCallbackCount = 0;
   int globalOnNotificationOpenedCallbackCount = 0;
   bool isConfigured = false;
+  bool onTokenReceivedListernerInitialized = false;
+
   bool isForegroundListernerInitialized = false;
   bool isBackgroundListernerInitialized = false;
   bool isOnNotificationOpenedListernerInitialized = false;
@@ -77,7 +81,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    getAndUpdateCallbackCounts();
+    // getAndUpdateCallbackCounts();
   }
 
   // static void globalBgCallback(RemotePushMessage remotePushMessage) async {
@@ -262,57 +266,69 @@ class _MyAppState extends State<MyApp> {
                 if (isConfigured)
                   const Text("Push notification plugin has been configured"),
 
-                if (Platform.isIOS) ...[
-                  CheckboxListTile(
-                    title: const Text("alert"),
-                    value: permissionOptionsMap['alert'],
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (newValue) {
-                      setState(() {
-                        permissionOptionsMap['alert'] = newValue;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text("sound"),
-                    value: permissionOptionsMap['sound'],
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (newValue) {
-                      setState(() {
-                        permissionOptionsMap['sound'] = newValue;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text("badge"),
-                    value: permissionOptionsMap['badge'],
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (newValue) {
-                      setState(() {
-                        permissionOptionsMap['badge'] = newValue;
-                      });
-                    },
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        pushPermissionRequestStatus = await Amplify
-                            .Notifications.requestMessagingPermission(
-                          alert: permissionOptionsMap['alert'],
-                          sound: permissionOptionsMap['sound'],
-                          badge: permissionOptionsMap['badge'],
-                        );
-                        setState(() {});
-                      } catch (e) {
-                        print(e.toString());
-                      }
-                    },
-                    child: const Text('requestMessagingPermission'),
-                  ),
-                  if (pushPermissionRequestStatus != null)
-                    Text(
-                        "Permission grant status: $pushPermissionRequestStatus"),
-                ],
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      final currentPushPermissionRequestStatus =
+                          await Amplify.Notifications.getPermissionStatus();
+                      print(
+                          "currentPushPermissionRequestStatus -> $currentPushPermissionRequestStatus");
+                    } catch (e) {
+                      print(e.toString());
+                    }
+                  },
+                  child: const Text('getPermissionStatus'),
+                ),
+
+                CheckboxListTile(
+                  title: const Text("alert"),
+                  value: permissionOptionsMap['alert'],
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (newValue) {
+                    setState(() {
+                      permissionOptionsMap['alert'] = newValue;
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  title: const Text("sound"),
+                  value: permissionOptionsMap['sound'],
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (newValue) {
+                    setState(() {
+                      permissionOptionsMap['sound'] = newValue;
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  title: const Text("badge"),
+                  value: permissionOptionsMap['badge'],
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (newValue) {
+                    setState(() {
+                      permissionOptionsMap['badge'] = newValue;
+                    });
+                  },
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      pushPermissionRequestStatus = await Amplify.Notifications
+                          .requestMessagingPermission(
+                        alert: permissionOptionsMap['alert'],
+                        sound: permissionOptionsMap['sound'],
+                        badge: permissionOptionsMap['badge'],
+                      );
+                      setState(() {});
+                    } catch (e) {
+                      print(e.toString());
+                    }
+                  },
+                  child: const Text('requestMessagingPermission'),
+                ),
+                if (pushPermissionRequestStatus != null)
+                  Text("Permission grant status: $pushPermissionRequestStatus"),
+
                 // ElevatedButton(
                 //   onPressed: () async {
                 //     try {
@@ -331,15 +347,33 @@ class _MyAppState extends State<MyApp> {
                 ElevatedButton(
                   onPressed: () async {
                     try {
-                      token = await Amplify.Notifications.getToken();
-                      if (token != null) setState(() {});
+                      final onTokenReceivedStream =
+                          Amplify.Notifications.onTokenReceived();
+                      onTokenReceivedStream.listen((event) {
+                        print("Token received: $event");
+                        setState(() {
+                          onTokenReceivedMessage = event;
+                        });
+                      });
+                      setState(() {
+                        onTokenReceivedListernerInitialized = true;
+                      });
                     } catch (e) {
                       print(e.toString());
                     }
                   },
-                  child: const Text('getToken'),
+                  child: const Text('onTokenReceived'),
                 ),
-                Text(token == null ? "No token yet" : "Device token: $token"),
+                if (onTokenReceivedListernerInitialized)
+                  const Text("onTokenReceived event listener initialized!"),
+                ListTile(
+                  title: Text(
+                    onTokenReceivedMessage == null
+                        ? "No token yet"
+                        : "Device token: $token",
+                  ),
+                ),
+                // Text(token == null ? "No token yet" : "Device token: $token"),
 
                 // if (Platform.isAndroid)
                 //   ElevatedButton(

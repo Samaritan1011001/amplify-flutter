@@ -28,27 +28,23 @@ abstract class NotificationsPluginInterface extends AmplifyPluginInterface {
     required AmplifyAuthProviderRepository authProviderRepo,
   }) async {}
 
+  Future<PushPermissionRequestStatus> getPermissionStatus() {
+    throw UnimplementedError('getPermissionStatus() has not been implemented');
+  }
+
   Future<PushPermissionRequestStatus> requestMessagingPermission(
       {bool? alert = true, bool? badge = true, bool? sound = true}) {
     throw UnimplementedError(
         'requestMessagingPermission() has not been implemented');
   }
 
-  Future<Stream<String>> onNewToken() {
-    throw UnimplementedError(
-      'onNewToken() has not been implemented',
-    );
-  }
-
-  Future<String?> getToken() {
-    throw UnimplementedError(
-      'getToken() has not been implemented',
-    );
+  Stream<String> onTokenReceived() {
+    throw UnimplementedError('onTokenReceived() has not been implemented');
   }
 
   Stream<RemotePushMessage> onForegroundNotificationReceived() {
     throw UnimplementedError(
-        'requestMessagingPermission() has not been implemented');
+        'onForegroundNotificationReceived() has not been implemented');
   }
 
   void onBackgroundNotificationReceived(RemoteMessageCallback callback) {

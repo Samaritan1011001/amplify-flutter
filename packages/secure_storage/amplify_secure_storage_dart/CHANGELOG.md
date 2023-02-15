@@ -1,3 +1,16 @@
+## 0.1.4+2
+
+- Minor bug fixes and improvements
+
+## 0.1.4+1
+
+### Fixes
+- fix(auth): legacy data migration for iOS ([#2516](https://github.com/aws-amplify/amplify-flutter/pull/2516))
+
+## 0.1.4
+
+- Minor bug fixes and improvements
+
 ## 0.1.3
 
 - Minor bug fixes and improvements

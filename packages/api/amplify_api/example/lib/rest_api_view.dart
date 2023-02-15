@@ -1,23 +1,11 @@
-/*
- * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
 class RestApiView extends StatefulWidget {
-  const RestApiView({Key? key}) : super(key: key);
+  const RestApiView({super.key});
 
   @override
   State<RestApiView> createState() => _RestApiViewState();
@@ -25,7 +13,7 @@ class RestApiView extends StatefulWidget {
 
 class _RestApiViewState extends State<RestApiView> {
   late TextEditingController _apiPathController;
-  late CancelableOperation _lastRestOperation;
+  late RestOperation _lastRestOperation;
 
   @override
   void initState() {
@@ -42,7 +30,7 @@ class _RestApiViewState extends State<RestApiView> {
         body: HttpPayload.json({'name': 'Mow the lawn'}),
       );
 
-      _lastRestOperation = restOperation.operation;
+      _lastRestOperation = restOperation;
       final response = await restOperation.response;
 
       print('Put SUCCESS');
@@ -60,7 +48,7 @@ class _RestApiViewState extends State<RestApiView> {
         body: HttpPayload.json({'name': 'Mow the lawn'}),
       );
 
-      _lastRestOperation = restOperation.operation;
+      _lastRestOperation = restOperation;
       final response = await restOperation.response;
 
       print('Post SUCCESS');
@@ -77,7 +65,7 @@ class _RestApiViewState extends State<RestApiView> {
         _apiPathController.text,
       );
 
-      _lastRestOperation = restOperation.operation;
+      _lastRestOperation = restOperation;
       final response = await restOperation.response;
 
       print('Get SUCCESS');
@@ -93,7 +81,7 @@ class _RestApiViewState extends State<RestApiView> {
       final restOperation = Amplify.API.delete(
         _apiPathController.text,
       );
-      _lastRestOperation = restOperation.operation;
+      _lastRestOperation = restOperation;
       final response = await restOperation.response;
 
       print('Delete SUCCESS');
@@ -106,7 +94,7 @@ class _RestApiViewState extends State<RestApiView> {
 
   void onCancelPressed() async {
     try {
-      _lastRestOperation.cancel();
+      await _lastRestOperation.cancel();
     } on Exception catch (e) {
       print('Cancel FAILED');
       print(e.toString());
@@ -119,7 +107,7 @@ class _RestApiViewState extends State<RestApiView> {
         _apiPathController.text,
       );
 
-      _lastRestOperation = restOperation.operation;
+      _lastRestOperation = restOperation;
       await restOperation.response;
 
       print('Head SUCCESS');
@@ -136,7 +124,7 @@ class _RestApiViewState extends State<RestApiView> {
         body: HttpPayload.json({'name': 'Mow the lawn'}),
       );
 
-      _lastRestOperation = restOperation.operation;
+      _lastRestOperation = restOperation;
       final response = await restOperation.response;
 
       print('Patch SUCCESS');
@@ -149,39 +137,41 @@ class _RestApiViewState extends State<RestApiView> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      TextField(
-        controller: _apiPathController,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'apiPath',
+    return Column(
+      children: [
+        TextField(
+          controller: _apiPathController,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'apiPath',
+          ),
         ),
-      ),
-      ElevatedButton(
-        onPressed: onPostPressed,
-        child: const Text('Post'),
-      ),
-      ElevatedButton(
-        onPressed: onPutPressed,
-        child: const Text('Put'),
-      ),
-      ElevatedButton(
-        onPressed: onGetPressed,
-        child: const Text('Get'),
-      ),
-      ElevatedButton(
-        onPressed: onCancelPressed,
-        child: const Text('Cancel'),
-      ),
-      ElevatedButton(
-        onPressed: onDeletePressed,
-        child: const Text('Delete'),
-      ),
-      ElevatedButton(
-        onPressed: onHeadPressed,
-        child: const Text('Head'),
-      ),
-      ElevatedButton(onPressed: onPatchPressed, child: const Text('Patch')),
-    ]);
+        ElevatedButton(
+          onPressed: onPostPressed,
+          child: const Text('Post'),
+        ),
+        ElevatedButton(
+          onPressed: onPutPressed,
+          child: const Text('Put'),
+        ),
+        ElevatedButton(
+          onPressed: onGetPressed,
+          child: const Text('Get'),
+        ),
+        ElevatedButton(
+          onPressed: onCancelPressed,
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: onDeletePressed,
+          child: const Text('Delete'),
+        ),
+        ElevatedButton(
+          onPressed: onHeadPressed,
+          child: const Text('Head'),
+        ),
+        ElevatedButton(onPressed: onPatchPressed, child: const Text('Patch')),
+      ],
+    );
   }
 }

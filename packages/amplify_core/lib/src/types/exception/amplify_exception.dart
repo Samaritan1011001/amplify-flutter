@@ -1,17 +1,5 @@
-/*
- * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_core/amplify_core.dart';
 import 'package:meta/meta.dart';
@@ -21,21 +9,12 @@ import 'package:meta/meta.dart';
 /// All other Amplify APIs throw subclasses of AmplifyException.
 /// {@endtemplate}
 @immutable
-class AmplifyException
-    with AWSEquatable<AmplifyException>
+abstract class AmplifyException
+    with
+        AWSDebuggable,
+        AWSEquatable<AmplifyException>,
+        AWSSerializable<Map<String, Object?>>
     implements Exception {
-  /// A descriptive message of the problem.
-  final String message;
-
-  /// How to recover from this exception.
-  final String? recoverySuggestion;
-
-  /// Underlying cause of this exception helpful for debugging.
-  final Object? underlyingException;
-
-  @override
-  List<Object?> get props => [message, recoverySuggestion, underlyingException];
-
   /// {@macro amplify_core.amplify_exception}
   const AmplifyException(
     this.message, {
@@ -52,15 +31,46 @@ class AmplifyException
       );
     }
 
-    return AmplifyException(
+    return _AmplifyException(
       serializedException['message']!,
       recoverySuggestion: serializedException['recoverySuggestion'],
       underlyingException: serializedException['underlyingException'],
     );
   }
 
+  /// A descriptive message of the problem.
+  final String message;
+
+  /// How to recover from this exception.
+  final String? recoverySuggestion;
+
+  /// Underlying cause of this exception helpful for debugging.
+  final Object? underlyingException;
+
   @override
-  String toString() =>
-      '$runtimeType(message: $message, recoverySuggestion: $recoverySuggestion,'
-      ' underlyingException: $underlyingException)';
+  List<Object?> get props => [
+        message,
+        recoverySuggestion,
+        underlyingException,
+      ];
+
+  @override
+  String get runtimeTypeName => 'AmplifyException';
+
+  @override
+  Map<String, Object?> toJson() => {
+        'message': message,
+        if (recoverySuggestion != null)
+          'recoverySuggestion': recoverySuggestion,
+        if (underlyingException != null)
+          'underlyingException': underlyingException.toString(),
+      };
+}
+
+class _AmplifyException extends AmplifyException {
+  const _AmplifyException(
+    super.message, {
+    super.recoverySuggestion,
+    super.underlyingException,
+  });
 }

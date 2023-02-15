@@ -1,19 +1,8 @@
-/*
- * Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_api_example/amplifyconfiguration.dart';
@@ -51,7 +40,7 @@ class TestUser {
       ),
     );
     if (!result.isSignUpComplete) {
-      throw const AmplifyException('Unable to sign up test user.');
+      throw Exception('Unable to sign up test user.');
     }
   }
 
@@ -70,7 +59,7 @@ class TestUser {
       password: _password,
     );
     if (!result.isSignedIn) {
-      throw const AmplifyException('Unable to sign in test user.');
+      throw Exception('Unable to sign in test user.');
     }
   }
 
@@ -109,7 +98,7 @@ Future<void> signUpTestUser() async {
 /// No-op if already signed in.
 Future<void> signInTestUser() async {
   if (testUser == null) {
-    throw const AmplifyException(
+    throw const InvalidStateException(
       'No test user to sign in.',
       recoverySuggestion: 'Ensure test user signed up.',
     );
@@ -124,7 +113,7 @@ Future<void> signOutTestUser() async {
 
 Future<void> deleteTestUser() async {
   if (testUser == null) {
-    throw const AmplifyException(
+    throw const InvalidStateException(
       'No test user to delete.',
       recoverySuggestion: 'Ensure test user signed up.',
     );
@@ -134,34 +123,62 @@ Future<void> deleteTestUser() async {
 
 // declare utility which creates blog with title as parameter
 Future<Blog> addBlog(String name) async {
-  final request = authorizeRequestForUserPools(
-    ModelMutations.create(Blog(name: name)),
+  final request = ModelMutations.create(
+    Blog(name: name),
+    authorizationMode: APIAuthorizationType.userPools,
   );
 
-  var r = Amplify.API.mutate(request: request);
-
-  var response = await r.response;
+  final response = await Amplify.API.mutate(request: request).response;
   expect(response, hasNoGraphQLErrors);
   final blog = response.data!;
   blogCache.add(blog);
   return blog;
 }
 
+/// Run a mutation on [Blog] with a partial selection set.
+///
+/// This is used to trigger an error on subscriptions listening for the
+/// full selection set.
+Future<GraphQLResponse<String>> runPartialMutation(String name) async {
+  const graphQLDocument = r'''mutation MyMutation($name: String!) {
+      createBlog(input: {name: $name}) {
+        id
+        name
+      }
+    }''';
+
+  final request = GraphQLRequest<String>(
+    document: graphQLDocument,
+    variables: <String, dynamic>{'name': name},
+    authorizationMode: APIAuthorizationType.userPools,
+  );
+  final response = await Amplify.API.mutate(request: request).response;
+  expect(response, hasNoGraphQLErrors);
+  // Add to cache so it can be cleaned up with other test artifacts.
+  final responseJson = json.decode(response.data!) as Map<String, dynamic>;
+  final blogFromResponse =
+      Blog.fromJson(responseJson['createBlog'] as Map<String, dynamic>);
+  blogCache.add(blogFromResponse);
+
+  return response;
+}
+
 Future<Post> addPostAndBlog(
   String title,
   int rating,
 ) async {
-  String name = 'Integration Test Blog with a post - create';
-  Blog createdBlog = await addBlog(name);
+  const name = 'Integration Test Blog with a post - create';
+  final createdBlog = await addBlog(name);
 
-  Post post = Post(title: title, rating: rating, blog: createdBlog);
-  final createPostReq = authorizeRequestForUserPools(
-    ModelMutations.create(post),
+  final post = Post(title: title, rating: rating, blog: createdBlog);
+  final createPostReq = ModelMutations.create(
+    post,
+    authorizationMode: APIAuthorizationType.userPools,
   );
   final createPostRes =
       await Amplify.API.mutate(request: createPostReq).response;
   expect(createPostRes, hasNoGraphQLErrors);
-  Post? data = createPostRes.data;
+  final data = createPostRes.data;
   if (data == null) {
     throw Exception(
       'Null response while creating post. Response errors: ${createPostRes.errors}',
@@ -172,29 +189,11 @@ Future<Post> addPostAndBlog(
   return data;
 }
 
-GraphQLRequest<T> authorizeRequestForUserPools<T>(GraphQLRequest<T> request) {
-  return GraphQLRequest<T>(
-    document: request.document,
-    variables: request.variables,
-    modelType: request.modelType,
-    decodePath: request.decodePath,
-    authorizationMode: APIAuthorizationType.userPools,
-  );
-}
-
-GraphQLRequest<T> authorizeRequestForApiKey<T>(GraphQLRequest<T> request) {
-  return GraphQLRequest<T>(
-    document: request.document,
-    variables: request.variables,
-    modelType: request.modelType,
-    decodePath: request.decodePath,
-    authorizationMode: APIAuthorizationType.apiKey,
-  );
-}
-
 Future<Blog?> deleteBlog(String id) async {
-  final request = authorizeRequestForUserPools(
-    ModelMutations.deleteById(Blog.classType, id),
+  final request = ModelMutations.deleteById(
+    Blog.classType,
+    id,
+    authorizationMode: APIAuthorizationType.userPools,
   );
   final res = await Amplify.API.mutate(request: request).response;
   expect(res, hasNoGraphQLErrors);
@@ -203,8 +202,10 @@ Future<Blog?> deleteBlog(String id) async {
 }
 
 Future<Post?> deletePost(String id) async {
-  final request = authorizeRequestForUserPools(
-    ModelMutations.deleteById(Post.classType, id),
+  final request = ModelMutations.deleteById(
+    Post.classType,
+    id,
+    authorizationMode: APIAuthorizationType.userPools,
   );
   final res = await Amplify.API.mutate(request: request).response;
   expect(res, hasNoGraphQLErrors);
@@ -223,12 +224,10 @@ Future<StreamSubscription<GraphQLResponse<T>>>
   GraphQLRequest<T> subscriptionRequest,
   void Function(GraphQLResponse<T>) onData,
 ) async {
-  Completer<void> establishedCompleter = Completer();
+  final establishedCompleter = Completer<void>();
   final stream = Amplify.API.subscribe<T>(
     subscriptionRequest,
-    onEstablished: () {
-      establishedCompleter.complete();
-    },
+    onEstablished: establishedCompleter.complete,
   );
   final subscription = stream.listen(
     onData,
@@ -243,23 +242,24 @@ Future<StreamSubscription<GraphQLResponse<T>>>
 /// Establish subscription for request, do the mutationFunction, then wait
 /// for the stream event, cancel the operation, return response from event.
 ///
-/// `eventFilter` can be used to ensure completer only called for specific events
-/// as the subscription may get events from other client mutations.
-Future<GraphQLResponse<T?>> establishSubscriptionAndMutate<T>(
+/// `eventFilter` is used to ensure completer only called for specific events
+/// as the subscription may get events from other client mutations (and is likely
+/// in CI).
+Future<GraphQLResponse<T>> establishSubscriptionAndMutate<T>(
   GraphQLRequest<T> subscriptionRequest,
   Future<void> Function() mutationFunction, {
-  bool Function(T?)? eventFilter,
+  required bool Function(GraphQLResponse<T>) eventFilter,
+  bool canFail = false,
 }) async {
-  Completer<GraphQLResponse<T?>> dataCompleter = Completer();
+  final dataCompleter = Completer<GraphQLResponse<T>>();
   // With stream established, exec callback with stream events.
   final subscription = await getEstablishedSubscriptionOperation<T>(
     subscriptionRequest,
     (event) {
-      if (event.hasErrors) {
+      if (!canFail && event.hasErrors) {
         fail('subscription errors: ${event.errors}');
       }
-      if (!dataCompleter.isCompleted &&
-          (eventFilter == null || eventFilter(event.data))) {
+      if (!dataCompleter.isCompleted && (eventFilter(event))) {
         dataCompleter.complete(event);
       }
     },
@@ -273,7 +273,39 @@ Future<GraphQLResponse<T?>> establishSubscriptionAndMutate<T>(
   return response;
 }
 
-final hasNoGraphQLErrors = predicate<GraphQLResponse>(
-  (GraphQLResponse response) => !response.hasErrors && response.data != null,
+final hasNoGraphQLErrors = predicate<GraphQLResponse<dynamic>>(
+  (GraphQLResponse<dynamic> response) =>
+      !response.hasErrors && response.data != null,
   'Has no GraphQL Errors',
+);
+
+/// Hub Event Matchers
+final connectedHubEvent = isA<SubscriptionHubEvent>().having(
+  (event) => event.status,
+  'status',
+  SubscriptionStatus.connected,
+);
+
+final connectingHubEvent = isA<SubscriptionHubEvent>().having(
+  (event) => event.status,
+  'status',
+  SubscriptionStatus.connecting,
+);
+
+final disconnectedHubEvent = isA<SubscriptionHubEvent>().having(
+  (event) => event.status,
+  'status',
+  SubscriptionStatus.disconnected,
+);
+
+final pendingDisconnectedHubEvent = isA<SubscriptionHubEvent>().having(
+  (event) => event.status,
+  'status',
+  SubscriptionStatus.pendingDisconnected,
+);
+
+final failedHubEvent = isA<SubscriptionHubEvent>().having(
+  (event) => event.status,
+  'status',
+  SubscriptionStatus.failed,
 );

@@ -6,27 +6,31 @@ import 'dart:ui';
 
 import 'package:amplify_core/amplify_core.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'callback_dispatcher.dart';
 
 const MethodChannel _methodChannel =
     MethodChannel('com.amazonaws.amplify/push_notification_plugin');
 
-class AmplifyPushNotification extends NotificationsPluginInterface {
+class AmplifyPushNotification extends NotificationsPluginInterface
+    with WidgetsBindingObserver {
   AmplifyPushNotification({this.serviceProviderClient});
 
   final ServiceProviderClient? serviceProviderClient;
-
-  final StreamController<String> _newTokenStream = StreamController<String>();
+  final StreamController<String> _onTokenReceivedStream =
+      StreamController<String>();
   final StreamController<RemotePushMessage> _foregroundEventStreamController =
       StreamController<RemotePushMessage>.broadcast();
   final StreamController<RemotePushMessage>
       _onNotificaitonOpenedEventStreamController =
       StreamController<RemotePushMessage>.broadcast();
+
   RemoteMessageCallback? bgUserGivenCallback;
   RemoteMessageCallback? appOpeningUserGivenCallback;
-  String BG_USER_CALLBACK_ID = "bg_user_given_callback";
-  String APP_OPNENING_USER_CALLBACK_ID = "app_opening_user_given_callback";
+  String bgCallbackId = "bg_user_given_callback";
+  String appOpeningCallbackId = "app_opening_user_given_callback";
+
   bool _isConfigured = false;
   final AmplifyLogger _logger = AmplifyLogger.category(Category.notifications)
       .createChild('AmplifyPushNotification');
@@ -82,7 +86,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
     required AnalyticsEvent event,
   }) async {
     if (serviceProviderClient == null) {
-      throw const AnalyticsException('Configure Amplify first.');
+      throw const PushNotificationException('Configure Amplify first.');
     }
     event.properties
       ..addStringProperty('app_state', 'foreground')
@@ -99,7 +103,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
           print(
             "TOKENS API | Plugin received a new device token: $decodedContent",
           );
-          _newTokenStream.sink.add(
+          _onTokenReceivedStream.sink.add(
             decodedContent,
           );
           break;
@@ -128,10 +132,6 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
           _onNotificaitonOpenedEventStreamController.sink.add(
             RemotePushMessage.fromJson(decodedContent),
           );
-          // if (appOpeningUserGivenCallback != null) {
-          //   appOpeningUserGivenCallback!(
-          //       RemotePushMessage.fromJson(decodedContent));
-          // }
           break;
         default:
           break;
@@ -163,7 +163,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
       _logger.info("Successfully registered notification handling callback");
 
       await _methodChannel.invokeMethod(
-          callbackId == BG_USER_CALLBACK_ID
+          callbackId == bgCallbackId
               ? 'registerBGUserGivenCallback'
               : 'registerAppOpeningUserGivenCallback',
           <dynamic>[callback?.toRawHandle()]);
@@ -200,27 +200,70 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   }
 
   @override
+  Future<PushPermissionRequestStatus> getPermissionStatus() async {
+    PushPermissionRequestStatus pushPermissionRequestStatus =
+        PushPermissionRequestStatus.undetermined;
+
+    try {
+      String? currentStatus =
+          await _methodChannel.invokeMethod<String>('getPermissionStatus');
+      print("currentStatus -> $currentStatus");
+      if (currentStatus != null) {
+        switch (currentStatus) {
+          case "granted":
+            pushPermissionRequestStatus = PushPermissionRequestStatus.granted;
+            break;
+          case "denied":
+            pushPermissionRequestStatus = PushPermissionRequestStatus.denied;
+            break;
+          case "undetermined":
+            pushPermissionRequestStatus =
+                PushPermissionRequestStatus.undetermined;
+            break;
+          default:
+            pushPermissionRequestStatus =
+                PushPermissionRequestStatus.undetermined;
+            break;
+        }
+        // pushPermissionRequestStatus =
+        //     currentStatus == PushPermissionRequestStatus.granted.name
+        //         ? PushPermissionRequestStatus.granted
+        //         : PushPermissionRequestStatus.denied;
+      }
+      _logger.info(
+        "PERMISSIONS API | getPermissionStatus API | Push Notification Permission request status: $pushPermissionRequestStatus",
+      );
+    } catch (e) {
+      _logger.error("Error when requesting permission: $e");
+    }
+
+    return pushPermissionRequestStatus;
+  }
+
+  @override
   Future<PushPermissionRequestStatus> requestMessagingPermission(
       {bool? alert = true, bool? badge = true, bool? sound = true}) async {
     PushPermissionRequestStatus pushPermissionRequestStatus =
         PushPermissionRequestStatus.undetermined;
 
     try {
-      bool? granted = await _methodChannel.invokeMethod<bool>(
+      String? granted = await _methodChannel.invokeMethod<String>(
           'requestMessagingPermission',
           jsonEncode({
             "alert": alert,
             "badge": badge,
             "sound": sound,
           }));
-
+      print(
+          "request permission status -> ${PushPermissionRequestStatus.granted.name}");
       if (granted != null) {
-        pushPermissionRequestStatus = granted
-            ? PushPermissionRequestStatus.granted
-            : PushPermissionRequestStatus.denied;
+        pushPermissionRequestStatus =
+            granted == PushPermissionRequestStatus.granted.name
+                ? PushPermissionRequestStatus.granted
+                : PushPermissionRequestStatus.denied;
       }
       _logger.info(
-        "PERMISSIONS API | Push Notuificaiton Permission request status: $pushPermissionRequestStatus",
+        "PERMISSIONS API | requestPermission API | Push Notification Permission request status: $pushPermissionRequestStatus",
       );
     } catch (e) {
       _logger.error("Error when requesting permission: $e");
@@ -241,9 +284,8 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   // }
 
   @override
-  Future<Stream<String>> onNewToken() async => _newTokenStream.stream;
+  Stream<String> onTokenReceived() => _onTokenReceivedStream.stream;
 
-  @override
   Future<String?> getToken() async {
     try {
       String? token = await _methodChannel.invokeMethod<String>('getToken');
@@ -266,7 +308,7 @@ class AmplifyPushNotification extends NotificationsPluginInterface {
   void onBackgroundNotificationReceived(RemoteMessageCallback callback) {
     bgUserGivenCallback = callback;
     // if (Platform.isAndroid) {
-    _registerUserGivenCallback(BG_USER_CALLBACK_ID, callback);
+    _registerUserGivenCallback(bgCallbackId, callback);
     // }
   }
 

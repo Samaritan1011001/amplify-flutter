@@ -1,17 +1,5 @@
-//
-// Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License").
-// You may not use this file except in compliance with the License.
-// A copy of the License is located at
-//
-//  http://aws.amazon.com/apache2.0
-//
-// or in the "license" file accompanying this file. This file is distributed
-// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-// express or implied. See the License for the specific language governing
-// permissions and limitations under the License.
-//
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 // ignore_for_file: deprecated_member_use_from_same_package
 
@@ -33,8 +21,6 @@ class CognitoAuthConfig with AWSEquatable<CognitoAuthConfig>, AWSSerializable {
     this.mfaConfiguration,
     this.mfaTypes,
     this.verificationMechanisms,
-    @Deprecated('Use usernameAttributes instead') this.loginMechanism,
-    @Deprecated('Use usernameAttributes instead') this.loginMechanisms,
   });
 
   @JsonKey(name: 'OAuth')
@@ -45,8 +31,6 @@ class CognitoAuthConfig with AWSEquatable<CognitoAuthConfig>, AWSSerializable {
   )
   final AuthenticationFlowType? authenticationFlowType;
   final List<SocialProvider>? socialProviders;
-  final List<CognitoUserAttributeKey>? loginMechanism;
-  final List<CognitoUserAttributeKey>? loginMechanisms;
   final List<CognitoUserAttributeKey>? usernameAttributes;
   final List<CognitoUserAttributeKey>? signupAttributes;
   final PasswordProtectionSettings? passwordProtectionSettings;
@@ -59,8 +43,6 @@ class CognitoAuthConfig with AWSEquatable<CognitoAuthConfig>, AWSSerializable {
         oAuth,
         authenticationFlowType,
         socialProviders,
-        loginMechanism,
-        loginMechanisms,
         usernameAttributes,
         signupAttributes,
         passwordProtectionSettings,
@@ -76,8 +58,6 @@ class CognitoAuthConfig with AWSEquatable<CognitoAuthConfig>, AWSSerializable {
     CognitoOAuthConfig? oAuth,
     AuthenticationFlowType? authenticationFlowType,
     List<SocialProvider>? socialProviders,
-    List<CognitoUserAttributeKey>? loginMechanism,
-    List<CognitoUserAttributeKey>? loginMechanisms,
     List<CognitoUserAttributeKey>? usernameAttributes,
     List<CognitoUserAttributeKey>? signupAttributes,
     PasswordProtectionSettings? passwordProtectionSettings,
@@ -93,12 +73,6 @@ class CognitoAuthConfig with AWSEquatable<CognitoAuthConfig>, AWSSerializable {
           (this.socialProviders == null
               ? null
               : List.of(this.socialProviders!)),
-      loginMechanism: loginMechanism ??
-          (this.loginMechanism == null ? null : List.of(this.loginMechanism!)),
-      loginMechanisms: loginMechanisms ??
-          (this.loginMechanisms == null
-              ? null
-              : List.of(this.loginMechanisms!)),
       usernameAttributes: usernameAttributes ??
           (this.usernameAttributes == null
               ? null

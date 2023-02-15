@@ -1,3 +1,30 @@
+## 0.4.0
+
+### Fixes
+- fix(aws_common): AWSFile contentType getter should not throw exception
+
+## 0.3.5+1
+
+- Minor bug fixes and improvements
+
+## 0.3.5
+
+- Minor bug fixes and improvements
+
+## 0.3.4
+
+### Features
+- feat(aws_common): AWSFile basic mime type detection based on extension name
+- feat(aws_common): allow specifying contentType initiating AWSFile
+
+### Fixes
+- fix(http): Synchronous cancellations on JS ([#2453](https://github.com/aws-amplify/amplify-flutter/pull/2453))
+
+## 0.3.3
+
+### Fixes
+- fix(aws_common): AWSFile doc example
+
 ## 0.3.2
 
 - Minor bug fixes and improvements

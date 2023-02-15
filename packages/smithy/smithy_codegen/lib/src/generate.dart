@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:code_builder/code_builder.dart';
 import 'package:smithy/ast.dart';
@@ -64,10 +53,23 @@ CodegenContext buildContext(
   );
 }
 
+class GeneratedOutput {
+  const GeneratedOutput({
+    required this.context,
+    required this.libraries,
+  });
+
+  /// The contexts used to generate [libraries].
+  final CodegenContext context;
+
+  /// The generated Dart libraries.
+  final List<GeneratedLibrary> libraries;
+}
+
 /// Generates a Dart file for each of the relevant shape types in [ast].
 ///
 /// Returns a map from the library to its formatted definition file.
-List<GeneratedLibrary> generateForAst(
+Map<ShapeId, GeneratedOutput> generateForAst(
   SmithyAst ast, {
   required String packageName,
   String? serviceName,
@@ -88,7 +90,7 @@ List<GeneratedLibrary> generateForAst(
     serviceShapes = [serviceShapes.first];
   }
 
-  final Set<GeneratedLibrary> libraries = {};
+  final outputs = <ShapeId, GeneratedOutput>{};
 
   for (final serviceShape in serviceShapes) {
     final context = buildContext(
@@ -107,12 +109,16 @@ List<GeneratedLibrary> generateForAst(
     // Build service shapes last, since they aggregate generated types.
     final operations = context.shapes.values.whereType<OperationShape>();
     final visitor = LibraryVisitor(context);
-    libraries.addAll([
+    final Iterable<GeneratedLibrary> libraries = [
       ...operations,
       ...additionalShapes.map(context.shapeFor),
       serviceShape
-    ].expand((shape) => shape.accept(visitor) ?? const []));
+    ].expand((shape) => shape.accept(visitor) ?? const []);
+    outputs[serviceShape.shapeId] = GeneratedOutput(
+      context: context,
+      libraries: libraries.toSet().toList(),
+    );
   }
 
-  return libraries.toList();
+  return outputs;
 }

@@ -1,17 +1,5 @@
-/*
-* Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 // NOTE: This file is generated and may not follow lint rules defined in your app
 // Generated files can be excluded from analysis in analysis_options.yaml
@@ -212,8 +200,7 @@ class Blog extends Model {
   static final QueryField FILES = QueryField(fieldName: "files");
   static final QueryField POSTS = QueryField(
       fieldName: "posts",
-      fieldType: ModelFieldType(ModelFieldTypeEnum.model,
-          ofModelName: (Post).toString()));
+      fieldType: ModelFieldType(ModelFieldTypeEnum.model, ofModelName: 'Post'));
   static var schema =
       Model.defineSchema(define: (ModelSchemaDefinition modelSchemaDefinition) {
     modelSchemaDefinition.name = "Blog";
@@ -251,7 +238,7 @@ class Blog extends Model {
     modelSchemaDefinition.addField(ModelFieldDefinition.hasMany(
         key: Blog.POSTS,
         isRequired: false,
-        ofModelName: (Post).toString(),
+        ofModelName: 'Post',
         associatedKey: Post.BLOG));
 
     modelSchemaDefinition.addField(ModelFieldDefinition.nonQueryField(
@@ -268,6 +255,11 @@ class _BlogModelType extends ModelType<Blog> {
   @override
   Blog fromJson(Map<String, dynamic> jsonData) {
     return Blog.fromJson(jsonData);
+  }
+
+  @override
+  String modelName() {
+    return 'Blog';
   }
 }
 

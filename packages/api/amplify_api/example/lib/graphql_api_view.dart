@@ -1,26 +1,14 @@
-/*
- * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import 'dart:async';
 
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
 class GraphQLApiView extends StatefulWidget {
+  const GraphQLApiView({super.key, this.isAmplifyConfigured = false});
   final bool isAmplifyConfigured;
-
-  const GraphQLApiView({Key? key, this.isAmplifyConfigured = false})
-      : super(key: key);
 
   @override
   State<GraphQLApiView> createState() => _GraphQLApiViewState();
@@ -28,39 +16,54 @@ class GraphQLApiView extends StatefulWidget {
 
 class _GraphQLApiViewState extends State<GraphQLApiView> {
   String _result = '';
+  StreamSubscription<GraphQLResponse<String>>? _subscription;
   void Function()? _unsubscribe;
-  late CancelableOperation _lastOperation;
+  GraphQLOperation<String>? _lastOperation;
 
-  Future<void> subscribe() async {
-    String graphQLDocument = '''subscription MySubscription {
+  final subscriptionReq = GraphQLRequest<String>(
+    document: '''subscription MySubscription {
     onCreateBlog {
       id
       name
       createdAt
     }
-  }''';
-    final Stream<GraphQLResponse<String>> operation = Amplify.API.subscribe(
-      GraphQLRequest<String>(document: graphQLDocument),
+  }''',
+  );
+
+  Future<void> subscribe() async {
+    if (_subscription != null) {
+      return;
+    }
+
+    final operation = Amplify.API.subscribe(
+      subscriptionReq,
       onEstablished: () => print('Subscription established'),
     );
 
     final streamSubscription = operation.listen(
       (event) {
-        final result = 'Subscription event data received: ${event.data}';
-        print(result);
+        if (event.hasErrors) {
+          print('Error(s) received from subscription: ${event.errors}');
+          return;
+        }
+        final data = 'Subscription event data received: ${event.data}';
+        print(data);
         setState(() {
-          _result = result;
+          _result = data;
         });
       },
       onError: (Object error) => print(
         'Error in GraphQL subscription: $error',
       ),
     );
-    _unsubscribe = streamSubscription.cancel;
+    setState(() {
+      _subscription = streamSubscription;
+      _unsubscribe = streamSubscription.cancel;
+    });
   }
 
   Future<void> query() async {
-    String graphQLDocument = '''query MyQuery {
+    const graphQLDocument = '''query MyQuery {
       listBlogs {
         items {
           id
@@ -70,12 +73,12 @@ class _GraphQLApiViewState extends State<GraphQLApiView> {
       }
     }''';
 
-    var operation = Amplify.API
+    final operation = Amplify.API
         .query<String>(request: GraphQLRequest(document: graphQLDocument));
-    _lastOperation = operation.operation;
+    _lastOperation = operation;
 
-    var response = await operation.response;
-    var data = response.data;
+    final response = await operation.response;
+    final data = response.data;
     if (data == null) {
       print('errors: ${response.errors}');
       return;
@@ -88,25 +91,25 @@ class _GraphQLApiViewState extends State<GraphQLApiView> {
   }
 
   Future<void> mutate() async {
-    String graphQLDocument = '''mutation MyMutation(\$name: String!) {
-      createBlog(input: {name: \$name}) {
+    const graphQLDocument = r'''mutation MyMutation($name: String!) {
+      createBlog(input: {name: $name}) {
         id
         name
         createdAt
       }
     }''';
 
-    var operation = Amplify.API.mutate(
+    final operation = Amplify.API.mutate(
       request: GraphQLRequest<String>(
         document: graphQLDocument,
         variables: <String, dynamic>{'name': 'Test App Blog'},
         authorizationMode: APIAuthorizationType.userPools,
       ),
     );
-    _lastOperation = operation.operation;
+    _lastOperation = operation;
 
-    var response = await operation.response;
-    var data = response.data;
+    final response = await operation.response;
+    final data = response.data;
     if (data == null) {
       print('errors: ${response.errors}');
       return;
@@ -120,7 +123,7 @@ class _GraphQLApiViewState extends State<GraphQLApiView> {
 
   void onCancelPressed() async {
     try {
-      _lastOperation.cancel();
+      await _lastOperation?.cancel();
     } on Exception catch (e) {
       print('Cancel FAILED');
       print(e.toString());
@@ -130,43 +133,54 @@ class _GraphQLApiViewState extends State<GraphQLApiView> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(5.0),
+      padding: const EdgeInsets.all(5),
       children: <Widget>[
-        const Padding(padding: EdgeInsets.all(10.0)),
+        const Padding(padding: EdgeInsets.all(10)),
         Center(
           child: ElevatedButton(
             onPressed: widget.isAmplifyConfigured ? query : null,
             child: const Text('Run Query'),
           ),
         ),
-        const Padding(padding: EdgeInsets.all(10.0)),
+        const Padding(padding: EdgeInsets.all(10)),
         Center(
           child: ElevatedButton(
             onPressed: widget.isAmplifyConfigured ? mutate : null,
             child: const Text('Run Mutation'),
           ),
         ),
-        const Padding(padding: EdgeInsets.all(10.0)),
+        const Padding(padding: EdgeInsets.all(10)),
         Center(
           child: ElevatedButton(
-            onPressed: widget.isAmplifyConfigured ? subscribe : null,
+            onPressed: widget.isAmplifyConfigured && _subscription == null
+                ? subscribe
+                : null,
             child: const Text('Subscribe'),
           ),
         ),
-        const Padding(padding: EdgeInsets.all(10.0)),
+        const Padding(padding: EdgeInsets.all(10)),
         Center(
           child: ElevatedButton(
-            onPressed: () => setState(() {
-              _unsubscribe?.call();
-              _unsubscribe = null;
-            }),
+            onPressed: _subscription != null
+                ? () => setState(() {
+                      _unsubscribe?.call();
+                      _unsubscribe = null;
+                      _subscription = null;
+                    })
+                : null,
             child: const Text('Unsubscribe'),
           ),
         ),
-        const Padding(padding: EdgeInsets.all(5.0)),
-        ElevatedButton(
-          onPressed: onCancelPressed,
-          child: const Text('Cancel'),
+        const Padding(padding: EdgeInsets.all(5)),
+        Center(
+          child: ElevatedButton(
+            onPressed: _lastOperation != null &&
+                    _lastOperation!.operation.isCompleted &&
+                    _lastOperation!.operation.isCanceled
+                ? onCancelPressed
+                : null,
+            child: const Text('Cancel Operation'),
+          ),
         ),
         Text('Result: \n$_result\n'),
       ],

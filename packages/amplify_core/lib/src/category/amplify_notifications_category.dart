@@ -21,6 +21,12 @@ class NotificationsCategory
   @nonVirtual
   Category get category => Category.notifications;
 
+  Future<PushPermissionRequestStatus> getPermissionStatus() {
+    return plugins.length == 1
+        ? plugins[0].getPermissionStatus()
+        : throw _pluginNotAddedException('Notifications');
+  }
+
   Future<PushPermissionRequestStatus> requestMessagingPermission(
       {bool? alert = true, bool? badge = true, bool? sound = true}) {
     return plugins.length == 1
@@ -29,15 +35,9 @@ class NotificationsCategory
         : throw _pluginNotAddedException('Notifications');
   }
 
-  Future<Stream<String>> onNewToken() {
+  Stream<String> onTokenReceived() {
     return plugins.length == 1
-        ? plugins[0].onNewToken()
-        : throw _pluginNotAddedException('Notifications');
-  }
-
-  Future<String?> getToken() {
-    return plugins.length == 1
-        ? plugins[0].getToken()
+        ? plugins[0].onTokenReceived()
         : throw _pluginNotAddedException('Notifications');
   }
 

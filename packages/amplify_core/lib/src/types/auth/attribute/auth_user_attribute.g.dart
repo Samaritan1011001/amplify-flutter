@@ -1,5 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// ignore_for_file: deprecated_member_use_from_same_package
+
 part of 'auth_user_attribute.dart';
 
 // **************************************************************************
@@ -7,7 +9,7 @@ part of 'auth_user_attribute.dart';
 // **************************************************************************
 
 AuthUserAttribute<Key>
-    _$AuthUserAttributeFromJson<Key extends UserAttributeKey>(
+    _$AuthUserAttributeFromJson<Key extends AuthUserAttributeKey>(
   Map<String, dynamic> json,
   Key Function(Object? json) fromJsonKey,
 ) =>
@@ -16,11 +18,12 @@ AuthUserAttribute<Key>
           value: json['value'] as String,
         );
 
-Map<String, dynamic> _$AuthUserAttributeToJson<Key extends UserAttributeKey>(
+Map<String, dynamic>
+    _$AuthUserAttributeToJson<Key extends AuthUserAttributeKey>(
   AuthUserAttribute<Key> instance,
   Object? Function(Key value) toJsonKey,
 ) =>
-    <String, dynamic>{
-      'userAttributeKey': toJsonKey(instance.userAttributeKey),
-      'value': instance.value,
-    };
+        <String, dynamic>{
+          'userAttributeKey': toJsonKey(instance.userAttributeKey),
+          'value': instance.value,
+        };

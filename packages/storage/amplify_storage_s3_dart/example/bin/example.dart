@@ -1,23 +1,11 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_storage_s3_dart/amplify_storage_s3_dart.dart';
-
 import 'package:storage_s3_example/common.dart';
 
 Future<void> main() async {
@@ -195,6 +183,7 @@ Future<void> getUrlOperation() async {
   final accessLevel = promptStorageAccessLevel(
     'Choose the storage access level associated with the object: ',
   );
+  final useAccelerateEndpoint = promptUseAcceleration();
 
   final s3Plugin = Amplify.Storage.getPlugin(AmplifyStorageS3Dart.pluginKey);
   final getUrlOperation = s3Plugin.getUrl(
@@ -205,6 +194,7 @@ Future<void> getUrlOperation() async {
         minutes: 10,
       ),
       checkObjectExistence: true,
+      useAccelerateEndpoint: useAccelerateEndpoint,
     ),
   );
 
@@ -265,6 +255,8 @@ Future<void> downloadFileOperation() async {
   final destinationPath = prompt(
     'Enter the destination file path (ensure the file path is writable): ',
   );
+  final useAccelerateEndpoint = promptUseAcceleration();
+
   final localFile = AWSFile.fromPath(destinationPath);
 
   final s3Plugin = Amplify.Storage.getPlugin(AmplifyStorageS3Dart.pluginKey);
@@ -274,6 +266,7 @@ Future<void> downloadFileOperation() async {
     options: S3DownloadFileOptions(
       getProperties: true,
       accessLevel: accessLevel,
+      useAccelerateEndpoint: useAccelerateEndpoint,
     ),
     onProgress: onTransferProgress,
   );
@@ -342,6 +335,7 @@ Future<void> uploadFileOperation() async {
   final file = AWSFile.fromPath(filePath);
 
   final option = prompt('Upload size ${await file.size}, continue? (Y/n): ');
+  final useAccelerateEndpoint = promptUseAcceleration();
 
   if (option.toLowerCase() != 'y') {
     stdout.writeln('Upload canceled.');
@@ -359,6 +353,7 @@ Future<void> uploadFileOperation() async {
       metadata: {
         'nameTag': nameTag,
       },
+      useAccelerateEndpoint: useAccelerateEndpoint,
     ),
   );
 
@@ -518,6 +513,17 @@ StorageAccessLevel promptStorageAccessLevel(String message) {
   }
 
   return accessLevel;
+}
+
+bool promptUseAcceleration() {
+  String input;
+
+  do {
+    input = prompt('Use transfer acceleration for this operation? (y/n): ')
+        .toLowerCase();
+  } while (input != 'y' && input != 'n');
+
+  return input == 'y';
 }
 
 Never exitError(Object error, [StackTrace? stackTrace]) {

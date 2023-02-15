@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -20,6 +9,7 @@ import 'package:amplify_storage_s3_dart/src/sdk/s3.dart' as s3;
 import 'package:amplify_storage_s3_dart/src/storage_s3_service/storage_s3_service.dart';
 import 'package:meta/meta.dart';
 import 'package:smithy/smithy.dart' as smithy;
+import 'package:smithy_aws/smithy_aws.dart' as smithy_aws;
 
 /// {@template amplify_storage_s3_dart.download_task}
 /// A task created to fulfill a download operation.
@@ -57,6 +47,7 @@ class S3DownloadTask {
   /// {@endtemplate}
   S3DownloadTask({
     required s3.S3Client s3Client,
+    required smithy_aws.S3ClientConfig defaultS3ClientConfig,
     required S3PrefixResolver prefixResolver,
     required String bucket,
     required String key,
@@ -69,6 +60,7 @@ class S3DownloadTask {
     required AWSLogger logger,
   })  : _downloadCompleter = Completer<S3Item>(),
         _s3Client = s3Client,
+        _defaultS3ClientConfig = defaultS3ClientConfig,
         _prefixResolver = prefixResolver,
         _bucket = bucket,
         _key = key,
@@ -85,6 +77,7 @@ class S3DownloadTask {
   final Completer<S3Item> _downloadCompleter;
 
   final s3.S3Client _s3Client;
+  final smithy_aws.S3ClientConfig _defaultS3ClientConfig;
   final S3PrefixResolver _prefixResolver;
   final String _bucket;
   final String _key;
@@ -113,7 +106,8 @@ class S3DownloadTask {
   // Total bytes that need to be downloaded, this field is set when the
   // **very first** (without bytes range specified) `S3Client.getObject`
   // response returns, value is from the response header.
-  late final int _totalBytes;
+  // Before the first response returns, the value remains -1 as "unknown".
+  int _totalBytes = -1;
 
   Future<void>? get _getObjectInitiated => _getObjectCompleter?.future;
   Future<void>? get _pausedCompleted => _pauseCompleter?.future;
@@ -336,13 +330,20 @@ class S3DownloadTask {
     });
 
     try {
-      return await _s3Client.getObject(request).result;
+      return await _s3Client
+          .getObject(
+            request,
+            s3ClientConfig: _defaultS3ClientConfig.copyWith(
+              useAcceleration: _downloadDataOptions.useAccelerateEndpoint,
+            ),
+          )
+          .result;
     } on smithy.UnknownSmithyHttpException catch (error) {
       // S3Client.getObject may return 403 error
       throw S3Exception.fromUnknownSmithyHttpException(error);
     } on s3.NoSuchKey catch (error) {
       // 404 error is wrapped by s3.NoSuchKey for getObject :/
-      throw S3Exception.objectNotFoundByKey(error);
+      throw S3Exception.getKeyNotFoundException(error);
     }
   }
 }

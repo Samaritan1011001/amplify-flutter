@@ -1,3 +1,20 @@
+## 1.0.0-next.4
+
+- Minor bug fixes and improvements
+
+## 1.0.0-next.3
+
+- Minor bug fixes and improvements
+
+## 1.0.0-next.2
+
+- Minor bug fixes and improvements
+
+## 1.0.0-next.1+1
+
+### Fixes
+- fix(datastore): surpress analyzer error on deprecated targetName
+
 ## 1.0.0-next.1
 
 - Minor bug fixes and improvements

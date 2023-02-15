@@ -1,22 +1,11 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:amplify_auth_cognito_dart/amplify_auth_cognito_dart.dart';
 import 'package:amplify_auth_cognito_dart/src/crypto/crypto.dart';
+import 'package:amplify_auth_cognito_dart/src/exception/srp_error.dart';
 import 'package:amplify_auth_cognito_dart/src/flows/helpers.dart';
 import 'package:amplify_auth_cognito_dart/src/flows/srp/srp_helper.dart';
 import 'package:amplify_auth_cognito_dart/src/flows/srp/srp_init_result.dart';
@@ -34,8 +23,8 @@ SrpInitResult get initResult => SrpInitResult((b) {
         ..publicA = SrpHelper.g.modPow(a, SrpHelper.N);
     });
 
-const username = 'User5';
-const password = 'Password1!';
+const srpUsername = 'User5';
+const srpPassword = 'Password1!';
 const poolName = 'Pj8nlkpKR';
 const salt = 'b704a27deb8cf5efec43a40eac5b60d2';
 const publicB =
@@ -86,11 +75,11 @@ void main() {
     group('createPasswordClaim', () {
       test('authenticateUser', () {
         final claim = SrpHelper.createPasswordClaim(
-          userId: username,
+          userId: srpUsername,
           parameters: SignInParameters(
             (b) => b
-              ..username = username
-              ..password = password,
+              ..username = srpUsername
+              ..password = srpPassword,
           ),
           initResult: initResult,
           encodedSalt: salt,
@@ -109,11 +98,11 @@ void main() {
 
         expect(
           () => SrpHelper.createPasswordClaim(
-            userId: username,
+            userId: srpUsername,
             parameters: SignInParameters(
               (b) => b
-                ..username = username
-                ..password = password,
+                ..username = srpUsername
+                ..password = srpPassword,
             ),
             initResult: initResult,
             encodedSalt: salt,
@@ -122,7 +111,7 @@ void main() {
             secretBlock: secretBlock,
             formattedTimestamp: formattedTimestamp,
           ),
-          throwsA(isA<SrpSignInCalculationException>()),
+          throwsA(isA<SrpError>()),
         );
       });
 
@@ -131,11 +120,11 @@ void main() {
 
         expect(
           () => SrpHelper.createPasswordClaim(
-            userId: username,
+            userId: srpUsername,
             parameters: SignInParameters(
               (b) => b
-                ..username = username
-                ..password = password,
+                ..username = srpUsername
+                ..password = srpPassword,
             ),
             initResult: initResult,
             encodedSalt: salt,
@@ -144,7 +133,7 @@ void main() {
             secretBlock: secretBlock,
             formattedTimestamp: formattedTimestamp,
           ),
-          throwsA(isA<SrpSignInCalculationException>()),
+          throwsA(isA<SrpError>()),
         );
       });
     });

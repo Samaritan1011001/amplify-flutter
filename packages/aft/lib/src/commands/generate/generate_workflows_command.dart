@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:io';
 
@@ -29,9 +18,8 @@ class GenerateWorkflowsCommand extends AmplifyCommand {
 
   @override
   Future<void> run() async {
-    final allPackages = await this.allPackages;
-    final repoRoot = await rootDir;
-    for (final package in allPackages.values) {
+    await super.run();
+    for (final package in commandPackages.values) {
       if (package.pubspecInfo.pubspec.publishTo == 'none' &&
           !falsePositiveExamples.contains(package.name)) {
         continue;
@@ -43,13 +31,13 @@ class GenerateWorkflowsCommand extends AmplifyCommand {
         continue;
       }
       final workflowFilepath = p.join(
-        repoRoot.path,
+        rootDir.path,
         '.github',
         'workflows',
         '${package.name}.yaml',
       );
       final workflowFile = File(workflowFilepath);
-      final repoRelativePath = p.relative(package.path, from: repoRoot.path);
+      final repoRelativePath = p.relative(package.path, from: rootDir.path);
       final customWorkflow = File(p.join(package.path, 'workflow.yaml'));
       if (customWorkflow.existsSync()) {
         customWorkflow.copySync(workflowFilepath);
@@ -82,8 +70,9 @@ class GenerateWorkflowsCommand extends AmplifyCommand {
         if (needsWebTest) ...[ddcWorkflow, dart2JsWorkflow],
       ];
       final workflowPaths = [
+        if (needsWebTest) '.github/composite_actions/setup_firefox/action.yaml',
         ...workflows.map((workflow) => '.github/workflows/$workflow'),
-        p.relative(workflowFilepath, from: repoRoot.path),
+        p.relative(workflowFilepath, from: rootDir.path),
       ].map((path) => "      - '$path'").join('\n');
 
       final workflowContents = StringBuffer(
@@ -122,7 +111,6 @@ jobs:
         workflowContents.write(
           '''
   native_test:
-    if: \${{ github.event_name == 'push' }}
     needs: test
     uses: ./.github/workflows/$nativeWorkflow
     with:
@@ -134,7 +122,6 @@ jobs:
           workflowContents.write(
             '''
   ddc_test:
-    if: \${{ github.event_name == 'push' }}
     needs: test
     uses: ./.github/workflows/$ddcWorkflow
     with:

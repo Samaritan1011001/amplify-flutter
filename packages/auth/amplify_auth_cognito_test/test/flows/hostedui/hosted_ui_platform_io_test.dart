@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 @TestOn('windows || mac-os || linux')
 
@@ -19,6 +8,7 @@ import 'dart:io';
 
 import 'package:amplify_auth_cognito_dart/amplify_auth_cognito_dart.dart';
 import 'package:amplify_auth_cognito_dart/src/flows/hosted_ui/hosted_ui_platform_io.dart';
+import 'package:amplify_auth_cognito_dart/src/state/state.dart';
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_secure_storage_dart/amplify_secure_storage_dart.dart';
 import 'package:http/http.dart' as http;
@@ -78,7 +68,8 @@ void main() {
             addTearDown(() => boundServer.server.close(force: true));
             expect(boundServer.uri, equals(uris[1]));
           }),
-          signOut: (platform, options) => throw UnimplementedError(),
+          signOut: (platform, options, isPreferPrivateSession) =>
+              throw UnimplementedError(),
         );
 
         final server = await HttpServer.bind(
@@ -101,7 +92,8 @@ void main() {
               addTearDown(() => boundServer.server.close(force: true));
             },
           ),
-          signOut: (platform, options) => throw UnimplementedError(),
+          signOut: (platform, options, isPreferPrivateSession) =>
+              throw UnimplementedError(),
         );
 
         await expectLater(
@@ -126,7 +118,8 @@ void main() {
               throwsA(isA<UrlLauncherException>()),
             );
           }),
-          signOut: (platform, options) => throw UnimplementedError(),
+          signOut: (platform, options, isPreferPrivateSession) =>
+              throw UnimplementedError(),
         );
 
         for (final uri in uris) {
@@ -145,16 +138,17 @@ void main() {
     group('signIn', () {
       test('completes', () async {
         final client = http.Client();
-        final dispatcher = DispatchListener(
+        final dispatcher = MockDispatcher(
           onDispatch: expectAsync1((event) {
             expect(event, isA<HostedUiExchange>());
+            return null;
           }),
         );
         dependencyManager
           ..addInstance(client)
           ..addInstance(mockConfig)
           ..addInstance(hostedUiConfig)
-          ..addInstance<Dispatcher>(dispatcher);
+          ..addInstance<Dispatcher<AuthEvent, AuthState>>(dispatcher);
         final hostedUiPlatform = MockHostedUiPlatform(dependencyManager);
 
         final redirect = Uri.parse(redirectUri);

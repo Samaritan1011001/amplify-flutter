@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -20,6 +9,7 @@ import 'package:amplify_storage_s3_dart/src/sdk/s3.dart';
 import 'package:amplify_storage_s3_dart/src/storage_s3_service/service/task/s3_download_task.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:smithy/smithy.dart';
+import 'package:smithy_aws/smithy_aws.dart';
 import 'package:test/test.dart';
 
 import '../../test_utils/mocks.dart';
@@ -30,6 +20,7 @@ void main() {
     const testBucket = 'bucket1';
     const testKey = 'some-object';
     final testPrefixResolver = TestPrefixResolver();
+    const defaultS3ClientConfig = S3ClientConfig();
     late S3Client s3Client;
     late AWSLogger logger;
 
@@ -50,6 +41,8 @@ void main() {
           key: 'dummy key',
         ),
       );
+
+      registerFallbackValue(const S3ClientConfig());
     });
 
     group('start() API', () {
@@ -64,6 +57,7 @@ void main() {
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -93,11 +87,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -111,7 +109,10 @@ void main() {
         await downloadTask.start();
 
         final capturedRequest = verify(
-          () => s3Client.getObject(captureAny<GetObjectRequest>()),
+          () => s3Client.getObject(
+            captureAny<GetObjectRequest>(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).captured.last;
 
         expect(capturedRequest is GetObjectRequest, isTrue);
@@ -131,6 +132,57 @@ void main() {
       });
 
       test(
+          'it should invoke S3Client.getObject API with correct useAcceleration parameter',
+          () async {
+        const testOptions = S3DownloadDataOptions(useAccelerateEndpoint: true);
+        const testBodyBytes = [101, 102];
+        final testGetObjectOutput = GetObjectOutput(
+          contentLength: Int64(testBodyBytes.length),
+          body: Stream.value(testBodyBytes),
+        );
+        final smithyOperation = MockSmithyOperation<GetObjectOutput>();
+
+        when(
+          () => smithyOperation.result,
+        ).thenAnswer((_) async => testGetObjectOutput);
+
+        when(
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
+        ).thenAnswer((_) => smithyOperation);
+
+        final downloadTask = S3DownloadTask(
+          s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
+          prefixResolver: testPrefixResolver,
+          bucket: testBucket,
+          key: testKey,
+          options: testOptions,
+          logger: logger,
+        );
+
+        await downloadTask.start();
+
+        final capturedS3ClientConfig = verify(
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: captureAny<S3ClientConfig>(named: 's3ClientConfig'),
+          ),
+        ).captured.last;
+
+        expect(
+          capturedS3ClientConfig,
+          isA<S3ClientConfig>().having(
+            (o) => o.useAcceleration,
+            'useAcceleration',
+            testOptions.useAccelerateEndpoint,
+          ),
+        );
+      });
+
+      test(
           'it should throw S3Exception when getObject response doesn\'t include a value contentLength header',
           () async {
         const testOptions = S3DownloadDataOptions();
@@ -145,11 +197,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -187,11 +243,15 @@ void main() {
           () => smithyOperation.result,
         ).thenAnswer((_) async => testGetObjectOutput);
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -227,11 +287,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput1);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation1);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -259,7 +323,10 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput2);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation2);
 
         await downloadTask.resume();
@@ -285,11 +352,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -326,11 +397,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -359,11 +434,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -381,20 +460,29 @@ void main() {
           statusCode: 403,
           body: 'Access denied!',
         ),
+        'UnknownSmithyHttpException for Acceleration':
+            const UnknownSmithyHttpException(
+          statusCode: 400,
+          body: 'S3 Transfer Acceleration is disabled on this bucket',
+        ),
         'NoSuchKey': NoSuchKey(),
       }
         ..forEach((exceptionType, exception) {
           test(
-              'it should complete with a S3Exception on $exceptionType of getObject on start',
+              'it should complete with an exception on $exceptionType of getObject on start',
               () async {
             const testOptions = S3DownloadDataOptions();
 
             when(
-              () => s3Client.getObject(any()),
+              () => s3Client.getObject(
+                any(),
+                s3ClientConfig: any(named: 's3ClientConfig'),
+              ),
             ).thenThrow(exception);
 
             final downloadTask = S3DownloadTask(
               s3Client: s3Client,
+              defaultS3ClientConfig: defaultS3ClientConfig,
               prefixResolver: testPrefixResolver,
               bucket: testBucket,
               key: testKey,
@@ -404,15 +492,29 @@ void main() {
 
             unawaited(downloadTask.start());
 
-            expect(
-              downloadTask.result,
-              throwsA(isA<S3Exception>()),
-            );
+            if (exception is UnknownSmithyHttpException) {
+              if (exception.statusCode == 403) {
+                expect(
+                  downloadTask.result,
+                  throwsA(isA<StorageAccessDeniedException>()),
+                );
+              } else {
+                expect(
+                  downloadTask.result,
+                  throwsA(isA<StorageHttpStatusException>()),
+                );
+              }
+            } else {
+              expect(
+                downloadTask.result,
+                throwsA(isA<StorageKeyNotFoundException>()),
+              );
+            }
           });
         })
         ..forEach((exceptionType, exception) {
           test(
-              'it should complete with a S3Exception on $exceptionType of getObject on resume',
+              'it should complete with an exception on $exceptionType of getObject on resume',
               () async {
             const testOptions = S3DownloadDataOptions();
             final testGetObjectOutput1 = GetObjectOutput(
@@ -430,11 +532,15 @@ void main() {
             ).thenAnswer((_) async => testGetObjectOutput1);
 
             when(
-              () => s3Client.getObject(any()),
+              () => s3Client.getObject(
+                any(),
+                s3ClientConfig: any(named: 's3ClientConfig'),
+              ),
             ).thenAnswer((_) => smithyOperation1);
 
             final downloadTask = S3DownloadTask(
               s3Client: s3Client,
+              defaultS3ClientConfig: defaultS3ClientConfig,
               prefixResolver: testPrefixResolver,
               bucket: testBucket,
               key: testKey,
@@ -449,15 +555,32 @@ void main() {
             await downloadTask.pause();
 
             when(
-              () => s3Client.getObject(any()),
+              () => s3Client.getObject(
+                any(),
+                s3ClientConfig: any(named: 's3ClientConfig'),
+              ),
             ).thenThrow(exception);
 
             unawaited(downloadTask.resume());
 
-            expect(
-              downloadTask.result,
-              throwsA(isA<S3Exception>()),
-            );
+            if (exception is UnknownSmithyHttpException) {
+              if (exception.statusCode == 403) {
+                expect(
+                  downloadTask.result,
+                  throwsA(isA<StorageAccessDeniedException>()),
+                );
+              } else {
+                expect(
+                  downloadTask.result,
+                  throwsA(isA<StorageHttpStatusException>()),
+                );
+              }
+            } else {
+              expect(
+                downloadTask.result,
+                throwsA(isA<StorageKeyNotFoundException>()),
+              );
+            }
           });
         });
     });
@@ -478,11 +601,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -517,11 +644,15 @@ void main() {
         ).thenAnswer((_) async => testGetObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => smithyOperation);
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,
@@ -570,7 +701,10 @@ void main() {
         ).thenAnswer((_) async => testHeadObjectOutput);
 
         when(
-          () => s3Client.getObject(any()),
+          () => s3Client.getObject(
+            any(),
+            s3ClientConfig: any(named: 's3ClientConfig'),
+          ),
         ).thenAnswer((_) => getSmithyOperation);
 
         when(
@@ -579,6 +713,7 @@ void main() {
 
         final downloadTask = S3DownloadTask(
           s3Client: s3Client,
+          defaultS3ClientConfig: defaultS3ClientConfig,
           prefixResolver: testPrefixResolver,
           bucket: testBucket,
           key: testKey,

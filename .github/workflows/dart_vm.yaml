@@ -21,7 +21,7 @@ jobs:
           # TODO(dnys1): Remove when repo bump to 2.19 happens
           # - 2.19.0
           - stable
-          - dev
+          - beta
     steps:
       - name: Cache Pub dependencies
         uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # 3.0.11
@@ -47,7 +47,12 @@ jobs:
           sdk: ${{ matrix.sdk }}
 
       - name: Setup aft
-        run: dart pub global activate -spath packages/aft
+        shell: bash # Run in bash regardless of platform
+        run: |
+          # Patch libgit2dart (see https://github.com/dart-lang/pub/issues/3563)
+          ( cd packages/aft/external/libgit2dart; git apply ../libgit2dart.patch )
+          dart pub global activate -spath packages/aft
+          ( cd packages/aft/external/libgit2dart; git reset --hard HEAD )
 
       - name: Bootstrap
         id: bootstrap

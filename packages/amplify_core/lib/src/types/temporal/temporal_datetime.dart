@@ -1,19 +1,6 @@
-/*
- * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
-import 'package:amplify_core/amplify_core.dart';
 import 'package:meta/meta.dart';
 
 import 'temporal.dart';
@@ -90,12 +77,11 @@ class TemporalDateTime implements Comparable<TemporalDateTime> {
     // Validate
     String? regexString = regExp.stringMatch(iso8601String);
     if (regexString == null || regexString != iso8601String) {
-      throw const AmplifyException(
-        'Invalid ISO8601 String Input',
-        recoverySuggestion:
-            'Please provide an extended ISO 8601 datetime string in the format '
-            'YYYY-MM-DDThh:mm:ss with an optional time zone offset ±hh:mm:ss.  '
-            '${Temporal.genericDocErrorMessage}',
+      throw const FormatException(
+        'Invalid ISO8601 String Input\n\n'
+        'Please provide an extended ISO 8601 datetime string in the format '
+        'YYYY-MM-DDThh:mm:ss with an optional time zone offset \u00b1hh:mm:ss. '
+        '${Temporal.genericDocErrorMessage}',
       );
     }
 

@@ -1,19 +1,8 @@
-/*
- * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_core/amplify_core.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'auth_next_update_attribute_step.g.dart';
 
@@ -23,7 +12,12 @@ part 'auth_next_update_attribute_step.g.dart';
 /// It contains [updateAttributeStep] to denote the step and supplements it with
 /// optional additional details.
 /// {@endtemplate}
-@zAmplifySerializable
+@JsonSerializable(
+  includeIfNull: false,
+  explicitToJson: true,
+  // TODO(dnys1): Fix generic serialization
+  createFactory: false,
+)
 class AuthNextUpdateAttributeStep extends AuthNextStep {
   /// {@macro amplify_core.auth_next_update_attribute_step}
   const AuthNextUpdateAttributeStep({
@@ -32,17 +26,9 @@ class AuthNextUpdateAttributeStep extends AuthNextStep {
     required this.updateAttributeStep,
   });
 
-  /// {@macro amplify_core.auth_next_update_attribute_step}
-  factory AuthNextUpdateAttributeStep.fromJson(Map<String, Object?> json) =>
-      _$AuthNextUpdateAttributeStepFromJson(json);
-
-  /// Represents the steps a user could be in for the user attribute update flow.
-  ///
-  /// Will have a value of `"CONFIRM_ATTRIBUTE_WITH_CODE"` if the user was sent a
-  /// code to enable the update of their user attribute.
-  ///
-  /// Will have a value of `"DONE"` if the flow is completed and no further steps are needed.
-  final String updateAttributeStep;
+  /// Represents the steps a user could be in for the user attribute update
+  /// flow.
+  final AuthUpdateAttributeStep updateAttributeStep;
 
   @override
   Map<String, Object?> toJson() => _$AuthNextUpdateAttributeStepToJson(this);

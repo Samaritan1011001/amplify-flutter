@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -277,8 +266,10 @@ abstract class HttpOperation<InputPayload, Input, OutputPayload, Output>
     StackTrace? stackTrace;
     var successCode = this.successCode();
     try {
-      final payload = await protocol.deserialize(response.split(),
-          specifiedType: FullType(OutputPayload));
+      final payload = await protocol.deserialize(
+        response.split(),
+        specifiedType: FullType(OutputPayload),
+      );
       if (payload is Output) {
         output = payload;
       } else {
@@ -290,36 +281,45 @@ abstract class HttpOperation<InputPayload, Input, OutputPayload, Output>
       stackTrace = st;
     }
     if (response.statusCode == successCode) {
+      // Close the response so that the underlying subscription created by
+      // `split` is cancelled as well.
+      response.close();
       if (output != null) {
         return output;
       }
       Error.throwWithStackTrace(error!, stackTrace!);
     }
 
-    SmithyError? smithyError;
-    final resolvedType = await protocol.resolveErrorType(response);
-    if (resolvedType != null) {
-      smithyError =
-          errorTypes.firstWhereOrNull((t) => t.shapeId.shape == resolvedType);
-    }
-    smithyError ??= errorTypes
-        .singleWhereOrNull((t) => t.statusCode == response.statusCode);
-    if (smithyError == null) {
-      throw SmithyHttpException(
-        statusCode: response.statusCode,
-        body: await response.decodeBody(),
-        headers: response.headers,
+    try {
+      SmithyError? smithyError;
+      final resolvedType = await protocol.resolveErrorType(response);
+      if (resolvedType != null) {
+        smithyError =
+            errorTypes.firstWhereOrNull((t) => t.shapeId.shape == resolvedType);
+      }
+      smithyError ??= errorTypes
+          .singleWhereOrNull((t) => t.statusCode == response.statusCode);
+      if (smithyError == null) {
+        throw SmithyHttpException(
+          statusCode: response.statusCode,
+          body: await response.decodeBody(),
+          headers: response.headers,
+        );
+      }
+      final Type errorType = smithyError.type;
+      final Function builder = smithyError.builder;
+      final Object? errorPayload = await protocol.deserialize(
+        response.body,
+        specifiedType: FullType(errorType),
       );
+      final SmithyException smithyException =
+          builder(errorPayload, response) as SmithyException;
+      throw smithyException;
+    } finally {
+      // Close the response so that the underlying subscription created by
+      // `split` is cancelled as well.
+      response.close();
     }
-    final Type errorType = smithyError.type;
-    final Function builder = smithyError.builder;
-    final Object? errorPayload = await protocol.deserialize(
-      response.body,
-      specifiedType: FullType(errorType),
-    );
-    final SmithyException smithyException =
-        builder(errorPayload, response) as SmithyException;
-    throw smithyException;
   }
 
   SmithyOperation<Output> run(

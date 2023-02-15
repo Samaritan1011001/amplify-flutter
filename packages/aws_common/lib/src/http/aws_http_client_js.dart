@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 import 'dart:typed_data';
@@ -37,11 +26,11 @@ class AWSHttpClientImpl extends AWSHttpClient {
     required StreamController<int> responseProgressController,
     required AbortController abortController,
     required CancelableCompleter<AWSBaseHttpResponse> completer,
-    required Future<void> cancelTrigger,
+    required Completer<void> cancelTrigger,
   }) async {
     void Function()? onCancel;
     unawaited(
-      cancelTrigger.then((_) {
+      cancelTrigger.future.then((_) {
         logger.verbose('Canceling request');
         onCancel?.call();
       }),
@@ -76,10 +65,12 @@ class AWSHttpClientImpl extends AWSHttpClient {
           requestProgressController.add(requestBytesRead);
         },
         onDone: () {
-          logger.verbose('Request sent');
+          if (!cancelTrigger.isCompleted) {
+            logger.verbose('Request sent');
+          }
           requestProgressController.close();
         },
-      ).takeUntil(cancelTrigger);
+      ).takeUntil(cancelTrigger.future);
       Object body;
       if (request.scheme == 'http' ||
           supportedProtocols.supports(AlpnProtocol.http1_1)) {
@@ -101,13 +92,24 @@ class AWSHttpClientImpl extends AWSHttpClient {
       );
 
       final streamView = resp.body;
-      final bodyController = StreamController<List<int>>(sync: true);
+      final bodyController = StreamController<List<int>>(
+        sync: true,
+        // In downstream operations, we may only have access to the body stream
+        // so we need to allow cancellation via the subscription.
+        onCancel: () {
+          logger.verbose('Subscription canceled');
+          if (!cancelTrigger.isCompleted) {
+            cancelTrigger.complete();
+          }
+        },
+      );
       onCancel = () {
         if (!bodyController.isClosed) {
           bodyController
             ..addError(const CancellationException())
             ..close();
         }
+        responseProgressController.close();
       };
       unawaited(
         streamView.progress.forward(
@@ -124,7 +126,9 @@ class AWSHttpClientImpl extends AWSHttpClient {
         body: bodyController.stream.tap(
           null,
           onDone: () {
-            logger.verbose('Response received');
+            if (!cancelTrigger.isCompleted) {
+              logger.verbose('Response received');
+            }
             onCancel = null;
             responseProgressController.close();
           },
@@ -151,6 +155,10 @@ class AWSHttpClientImpl extends AWSHttpClient {
     final cancelTrigger = Completer<void>.sync();
 
     FutureOr<void> wrappedOnCancel() {
+      // Protect against multiple synchronous calls to `cancel`.
+      if (cancelTrigger.isCompleted) {
+        return null;
+      }
       abortController.abort();
       requestProgressController.close();
       responseProgressController.close();
@@ -174,7 +182,7 @@ class AWSHttpClientImpl extends AWSHttpClient {
       responseProgressController: responseProgressController,
       abortController: abortController,
       completer: completer,
-      cancelTrigger: cancelTrigger.future,
+      cancelTrigger: cancelTrigger,
     ).catchError(
       (Object e, st) => completer.completeError(
         AWSHttpException(request, e),

@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
 
@@ -79,6 +68,7 @@ extension ShapeClassName on Shape {
         if (!isEnum) return null;
         break;
       case ShapeType.enum_:
+      case ShapeType.intEnum:
       case ShapeType.structure:
       case ShapeType.operation:
       case ShapeType.union:
@@ -513,7 +503,9 @@ extension OperationShapeUtil on OperationShape {
       (p) => p
         ..type = DartTypes.awsCommon.awsHttpClient.boxed
         ..name = 'client'
-        ..location = ParameterLocation.all,
+        ..location = ParameterLocation.run |
+            ParameterLocation.clientConstructor |
+            ParameterLocation.clientMethod,
     );
 
     if (serviceShape.isAwsService) {
@@ -522,7 +514,8 @@ extension OperationShapeUtil on OperationShape {
           ..type = DartTypes.core.string
           ..name = 'region'
           ..required = true
-          ..location = ParameterLocation.constructor,
+          ..location = ParameterLocation.constructor |
+              ParameterLocation.clientConstructor,
       );
 
       // The baseUri field
@@ -530,7 +523,8 @@ extension OperationShapeUtil on OperationShape {
         (p) => p
           ..type = DartTypes.core.uri.boxed
           ..name = 'baseUri'
-          ..location = ParameterLocation.constructor,
+          ..location = ParameterLocation.constructor |
+              ParameterLocation.clientConstructor,
       );
     } else {
       // The baseUri override
@@ -540,7 +534,8 @@ extension OperationShapeUtil on OperationShape {
           ..name = 'baseUri'
           ..isOverride = true
           ..required = true
-          ..location = ParameterLocation.constructor,
+          ..location = ParameterLocation.constructor |
+              ParameterLocation.clientConstructor,
       );
     }
 
@@ -551,7 +546,9 @@ extension OperationShapeUtil on OperationShape {
           ..type = DartTypes.smithyAws.s3ClientConfig
           ..name = 's3ClientConfig'
           ..required = true
-          ..location = ParameterLocation.constructor
+          ..location = ParameterLocation.constructor |
+              ParameterLocation.clientConstructor |
+              ParameterLocation.clientMethod
           ..defaultTo =
               DartTypes.smithyAws.s3ClientConfig.constInstance([]).code,
       );
@@ -562,19 +559,41 @@ extension OperationShapeUtil on OperationShape {
         (p) => p
           ..type = DartTypes.awsSigV4.awsCredentialsProvider
           ..name = 'credentialsProvider'
-          ..location = ParameterLocation.constructor
+          ..location = ParameterLocation.constructor |
+              ParameterLocation.clientConstructor |
+              ParameterLocation.clientMethod
           ..required = true
           ..defaultTo = DartTypes.awsSigV4.awsCredentialsProvider
               .constInstanceNamed('environment', []).code,
       );
     }
+
+    // The requestInterceptors field.
+    yield ConfigParameter(
+      (p) => p
+        ..type = DartTypes.core.list(DartTypes.smithy.httpRequestInterceptor)
+        ..name = 'requestInterceptors'
+        ..location =
+            ParameterLocation.constructor | ParameterLocation.clientConstructor
+        ..defaultTo = const Code('const []'),
+    );
+
+    // The responseInterceptors field.
+    yield ConfigParameter(
+      (p) => p
+        ..type = DartTypes.core.list(DartTypes.smithy.httpResponseInterceptor)
+        ..name = 'responseInterceptors'
+        ..location =
+            ParameterLocation.constructor | ParameterLocation.clientConstructor
+        ..defaultTo = const Code('const []'),
+    );
   }
 
   /// Fields which should be generated for the operation and its service client
   /// based off the traits attached to this shape's service.
   Iterable<Field> protocolFields(CodegenContext context) sync* {
     for (final parameter in operationParameters(context)
-        .where((p) => p.location == ParameterLocation.constructor)) {
+        .where((p) => p.location.inConstructor)) {
       yield Field(
         (f) => f
           ..modifier = FieldModifier.final$
@@ -594,7 +613,7 @@ extension OperationShapeUtil on OperationShape {
     bool Function(ConfigParameter) toThis = _defaultToThis,
   }) sync* {
     for (final parameter in operationParameters(context)
-        .where((p) => p.location == ParameterLocation.constructor)) {
+        .where((p) => p.location.inConstructor)) {
       yield Parameter((p) {
         final pToThis = toThis(parameter);
         p

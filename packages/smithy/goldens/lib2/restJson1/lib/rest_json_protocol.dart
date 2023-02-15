@@ -1,4 +1,4 @@
-// Generated with smithy-dart 0.1.1. DO NOT MODIFY.
+// Generated with smithy-dart 0.3.1. DO NOT MODIFY.
 
 /// A REST JSON service that sends JSON requests and responses.
 library rest_json1_v2.rest_json_protocol;
@@ -53,9 +53,11 @@ export 'package:rest_json1_v2/src/rest_json_protocol/model/http_response_code_ou
 export 'package:rest_json1_v2/src/rest_json_protocol/model/ignore_query_params_in_response_output.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/input_and_output_with_headers_io.dart'
     hide InputAndOutputWithHeadersIoPayload;
+export 'package:rest_json1_v2/src/rest_json_protocol/model/integer_enum.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/invalid_greeting.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/json_blobs_input_output.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/json_enums_input_output.dart';
+export 'package:rest_json1_v2/src/rest_json_protocol/model/json_int_enums_input_output.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/json_lists_input_output.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/json_maps_input_output.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/json_timestamps_input_output.dart';
@@ -68,6 +70,8 @@ export 'package:rest_json1_v2/src/rest_json_protocol/model/malformed_byte_input.
     hide MalformedByteInputPayload;
 export 'package:rest_json1_v2/src/rest_json_protocol/model/malformed_content_type_with_generic_string_input.dart';
 export 'package:rest_json1_v2/src/rest_json_protocol/model/malformed_content_type_with_payload_input.dart';
+export 'package:rest_json1_v2/src/rest_json_protocol/model/malformed_content_type_without_body_empty_input_input.dart'
+    hide MalformedContentTypeWithoutBodyEmptyInputInputPayload;
 export 'package:rest_json1_v2/src/rest_json_protocol/model/malformed_double_input.dart'
     hide MalformedDoubleInputPayload;
 export 'package:rest_json1_v2/src/rest_json_protocol/model/malformed_float_input.dart'

@@ -1,16 +1,5 @@
-// Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License").
-// You may not use this file except in compliance with the License.
-// A copy of the License is located at
-//
-//  http://aws.amazon.com/apache2.0
-//
-// or in the "license" file accompanying this file. This file is distributed
-// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-// express or implied. See the License for the specific language governing
-// permissions and limitations under the License.
-//
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_analytics_pinpoint/amplify_analytics_pinpoint.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
@@ -128,7 +117,12 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _identifyUser() async {
-    final analyticsUserProfile = AnalyticsUserProfile();
+    final analyticsUserProfile = AWSPinpointUserProfile(
+        userAttributes: AnalyticsProperties()
+          ..addStringProperty('${_userId}_user_stringKey', 'stringValue')
+          ..addIntProperty('${_userId}_user_intKey', 10)
+          ..addDoubleProperty('${_userId}_user_doubleKey', 10)
+          ..addBoolProperty('${_userId}_user_boolKey', false));
     analyticsUserProfile.name = '${_userId}_name';
     analyticsUserProfile.email = '${_userId}_email';
     analyticsUserProfile.plan = '${_userId}_plan';
@@ -144,10 +138,11 @@ class _MyAppState extends State<MyApp> {
     analyticsUserProfile.location = analyticsUserLocation;
 
     final properties = AnalyticsProperties();
-    properties.addStringProperty('${_userId}_stringKey', 'stringValue');
-    properties.addIntProperty('${_userId}_intKey', 10);
-    properties.addDoubleProperty('${_userId}_doubleKey', 10);
-    properties.addBoolProperty('${_userId}_boolKey', false);
+    properties.addStringProperty(
+        '${_userId}_endpoint_stringKey', 'stringValue');
+    properties.addIntProperty('${_userId}_endpoint_intKey', 10);
+    properties.addDoubleProperty('${_userId}_endpoint_doubleKey', 10);
+    properties.addBoolProperty('${_userId}_endpoint_boolKey', false);
 
     analyticsUserProfile.properties = properties;
 

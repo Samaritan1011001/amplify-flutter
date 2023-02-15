@@ -1,27 +1,19 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:aws_common/aws_common.dart';
+import 'package:mime/mime.dart';
 
 /// The io implementation of [AWSFile].
 class AWSFilePlatform extends AWSFile {
   /// Creates an [AWSFile] from io [File].
-  AWSFilePlatform.fromFile(File file)
-      : _stream = null,
+  AWSFilePlatform.fromFile(
+    File file, {
+    super.contentType,
+  })  : _stream = null,
         _inputFile = file,
         _size = null,
         super.protected();
@@ -30,6 +22,7 @@ class AWSFilePlatform extends AWSFile {
   AWSFilePlatform.fromPath(
     String path, {
     super.name,
+    super.contentType,
   })  : _stream = null,
         _inputFile = File(path),
         _size = null,
@@ -60,6 +53,7 @@ class AWSFilePlatform extends AWSFile {
           bytes: data,
         );
 
+  final _contentTypeMemo = AsyncMemoizer<String?>();
   final File? _inputFile;
   final int? _size;
   final Stream<List<int>>? _stream;
@@ -104,4 +98,19 @@ class AWSFilePlatform extends AWSFile {
     // the constructors ensures it won't reach to this point, but just in case
     throw const InvalidFileException();
   }
+
+  @override
+  Future<String?> get contentType => _contentTypeMemo.runOnce(() async {
+        final externalContentType = await super.contentType;
+        if (externalContentType != null) {
+          return externalContentType;
+        }
+
+        final file = _inputFile;
+        if (file != null) {
+          return lookupMimeType(file.path);
+        }
+
+        return null;
+      });
 }

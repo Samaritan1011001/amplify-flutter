@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
 import 'dart:io';
@@ -81,9 +70,13 @@ Future<void> main() async {
     stdout
       ..writeln('Session Details')
       ..writeln('---------------')
-      ..writeln('Access Token: ${session.userPoolTokens?.accessToken.raw}')
-      ..writeln('Refresh Token: ${session.userPoolTokens?.refreshToken}')
-      ..writeln('ID Token: ${session.userPoolTokens?.idToken.raw}')
+      ..writeln(
+        'Access Token: ${session.userPoolTokensResult.value.accessToken.raw}',
+      )
+      ..writeln(
+        'Refresh Token: ${session.userPoolTokensResult.value.refreshToken}',
+      )
+      ..writeln('ID Token: ${session.userPoolTokensResult.value.idToken.raw}')
       ..writeln();
 
     final attributes = await fetchUserAttributes();
@@ -132,16 +125,15 @@ Future<SignInResult> _processSignInResult(
   required String username,
   required String password,
 }) async {
-  final nextStep = result.nextStep?.signInStep;
+  final nextStep = result.nextStep.signInStep;
   final missingAttributes =
-      result.nextStep?.missingAttributes.cast<CognitoUserAttributeKey>() ??
-          const [];
+      result.nextStep.missingAttributes.cast<CognitoUserAttributeKey>();
   switch (nextStep) {
-    case 'CONFIRM_SIGN_IN_WITH_SMS_MFA_CODE':
-    case 'CONFIRM_SIGN_IN_WITH_CUSTOM_CHALLENGE':
+    case AuthSignInStep.confirmSignInWithSmsMfaCode:
+    case AuthSignInStep.confirmSignInWithCustomChallenge:
       final confirmationCode = prompt('Enter your confirmation code: ');
       return confirmSignIn(confirmationCode);
-    case 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD':
+    case AuthSignInStep.confirmSignInWithNewPassword:
       final userAttributes = <CognitoUserAttributeKey, String>{};
       for (final missingAttribute in missingAttributes) {
         final attributeValue = prompt(
@@ -154,7 +146,7 @@ Future<SignInResult> _processSignInResult(
         newPassword,
         userAttributes: userAttributes,
       );
-    case 'RESET_PASSWORD':
+    case AuthSignInStep.resetPassword:
       final result = await resetPassword(username: username);
       stdout
         ..writeln('You must reset your password.')

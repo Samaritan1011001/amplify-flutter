@@ -1,21 +1,13 @@
-/*
- * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *
- *  http://aws.amazon.com/apache2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_core/amplify_core.dart';
 
 part 'cognito_session_options.g.dart';
+
+const _getAWSCredentialsDeprecation = '`getAWSCredentials` is ignored. AWS '
+    'Credentials will always be retrieved. `credentialsResult` will contain '
+    'the result of retrieving credentials, which may be an error';
 
 /// {@template amplify_auth_cognito.model.cognito_session_options}
 /// Cognito options for `Amplify.Auth.fetchAuthSession`.
@@ -25,7 +17,8 @@ class CognitoSessionOptions extends AuthSessionOptions
     with AWSEquatable<CognitoSessionOptions>, AWSDebuggable {
   /// {@macro amplify_auth_cognito.model.cognito_session_options}
   const CognitoSessionOptions({
-    this.getAWSCredentials = false,
+    // ignore: avoid_unused_constructor_parameters
+    @Deprecated(_getAWSCredentialsDeprecation) bool? getAWSCredentials = false,
     super.forceRefresh = false,
   });
 
@@ -33,17 +26,8 @@ class CognitoSessionOptions extends AuthSessionOptions
   factory CognitoSessionOptions.fromJson(Map<String, Object?> json) =>
       _$CognitoSessionOptionsFromJson(json);
 
-  /// Whether to retrieve AWS credentials as part of the session fetching.
-  ///
-  /// If no AWS credentials are currently present, and this is `true`, a new
-  /// set of temporary credentials will be requested using the registered
-  /// Cognito Identity Pool.
-  ///
-  /// Defaults to `false`.
-  final bool getAWSCredentials;
-
   @override
-  List<Object?> get props => [getAWSCredentials, forceRefresh];
+  List<Object?> get props => [forceRefresh];
 
   @override
   String get runtimeTypeName => 'CognitoSessionOptions';

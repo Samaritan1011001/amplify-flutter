@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:convert';
 
@@ -65,7 +54,7 @@ void main() {
 
           final session =
               await Amplify.Auth.fetchAuthSession() as CognitoAuthSession;
-          expect(session.userPoolTokens, isNotNull);
+          expect(session.userPoolTokensResult.value, isNotNull);
 
           final apiUrl = config.api!.awsPlugin!.values
               .singleWhere((e) => e.endpointType == EndpointType.rest)
@@ -90,7 +79,8 @@ void main() {
             ),
             headers: {
               AWSHeaders.accept: 'application/json;charset=utf-8',
-              AWSHeaders.authorization: session.userPoolTokens!.idToken.raw,
+              AWSHeaders.authorization:
+                  session.userPoolTokensResult.value.idToken.raw,
             },
             body: utf8.encode(payload),
           );
@@ -126,10 +116,8 @@ void main() {
               final cognitoPlugin = Amplify.Auth.getPlugin(
                 AmplifyAuthCognito.pluginKey,
               );
-              final session = await cognitoPlugin.fetchAuthSession(
-                options: const CognitoSessionOptions(getAWSCredentials: true),
-              );
-              expect(session.credentials, isNotNull);
+              final session = await cognitoPlugin.fetchAuthSession();
+              expect(session.credentialsResult.value, isNotNull);
 
               final restApi = config.api!.awsPlugin!.values
                   .singleWhere((e) => e.endpointType == EndpointType.rest);
@@ -154,7 +142,7 @@ void main() {
               final signer = AWSSigV4Signer(
                 credentialsProvider: AuthPluginCredentialsProviderImpl(
                   // ignore: invalid_use_of_protected_member
-                  cognitoPlugin.plugin.stateMachine,
+                  cognitoPlugin.stateMachine,
                 ),
               );
               final scope = AWSCredentialScope(
@@ -181,10 +169,8 @@ void main() {
               final cognitoPlugin = Amplify.Auth.getPlugin(
                 AmplifyAuthCognito.pluginKey,
               );
-              final session = await cognitoPlugin.fetchAuthSession(
-                options: const CognitoSessionOptions(getAWSCredentials: true),
-              );
-              expect(session.credentials, isNotNull);
+              final session = await cognitoPlugin.fetchAuthSession();
+              expect(session.credentialsResult.value, isNotNull);
 
               final restApi = config.api!.awsPlugin!.values
                   .singleWhere((e) => e.endpointType == EndpointType.rest);
@@ -209,7 +195,7 @@ void main() {
               final signer = AWSSigV4Signer(
                 credentialsProvider: AuthPluginCredentialsProviderImpl(
                   // ignore: invalid_use_of_protected_member
-                  cognitoPlugin.plugin.stateMachine,
+                  cognitoPlugin.stateMachine,
                 ),
               );
               final scope = AWSCredentialScope(
@@ -237,10 +223,8 @@ void main() {
               final cognitoPlugin = Amplify.Auth.getPlugin(
                 AmplifyAuthCognito.pluginKey,
               );
-              final session = await cognitoPlugin.fetchAuthSession(
-                options: const CognitoSessionOptions(getAWSCredentials: true),
-              );
-              expect(session.credentials, isNotNull);
+              final session = await cognitoPlugin.fetchAuthSession();
+              expect(session.credentialsResult.value, isNotNull);
 
               final restOperation = Amplify.API.post(
                 '/',

@@ -1,4 +1,4 @@
-// Generated with smithy-dart 0.1.1. DO NOT MODIFY.
+// Generated with smithy-dart 0.3.1. DO NOT MODIFY.
 
 library aws_json1_1_v1.json_protocol.json_protocol_client; // ignore_for_file: no_leading_underscores_for_library_prefixes
 
@@ -55,11 +55,16 @@ class JsonProtocolClient {
     _i1.AWSHttpClient? client,
     required String region,
     Uri? baseUri,
-    required _i2.AWSCredentialsProvider credentialsProvider,
+    _i2.AWSCredentialsProvider credentialsProvider =
+        const _i2.AWSCredentialsProvider.environment(),
+    List<_i3.HttpRequestInterceptor> requestInterceptors = const [],
+    List<_i3.HttpResponseInterceptor> responseInterceptors = const [],
   })  : _client = client,
         _region = region,
         _baseUri = baseUri,
-        _credentialsProvider = credentialsProvider;
+        _credentialsProvider = credentialsProvider,
+        _requestInterceptors = requestInterceptors,
+        _responseInterceptors = responseInterceptors;
 
   final _i1.AWSHttpClient? _client;
 
@@ -69,22 +74,36 @@ class JsonProtocolClient {
 
   final _i2.AWSCredentialsProvider _credentialsProvider;
 
-  _i3.SmithyOperation<void> emptyOperation({_i1.AWSHttpClient? client}) {
+  final List<_i3.HttpRequestInterceptor> _requestInterceptors;
+
+  final List<_i3.HttpResponseInterceptor> _responseInterceptors;
+
+  _i3.SmithyOperation<void> emptyOperation({
+    _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
+  }) {
     return _i4.EmptyOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       const _i3.Unit(),
       client: client ?? _client,
     );
   }
 
-  _i3.SmithyOperation<void> endpointOperation({_i1.AWSHttpClient? client}) {
+  _i3.SmithyOperation<void> endpointOperation({
+    _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
+  }) {
     return _i5.EndpointOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       const _i3.Unit(),
       client: client ?? _client,
@@ -94,11 +113,14 @@ class JsonProtocolClient {
   _i3.SmithyOperation<void> endpointWithHostLabelOperation(
     _i6.HostLabelInput input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i7.EndpointWithHostLabelOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -106,23 +128,32 @@ class JsonProtocolClient {
   }
 
   /// This operation has three possible return values: 1. A successful response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting error. 3. A ComplexError error. Implementations must be able to successfully take a response and properly deserialize successful and error responses.
-  _i3.SmithyOperation<_i8.GreetingWithErrorsOutput> greetingWithErrors(
-      {_i1.AWSHttpClient? client}) {
+  _i3.SmithyOperation<_i8.GreetingWithErrorsOutput> greetingWithErrors({
+    _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
+  }) {
     return _i9.GreetingWithErrorsOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       const _i3.Unit(),
       client: client ?? _client,
     );
   }
 
-  _i3.SmithyOperation<void> hostWithPathOperation({_i1.AWSHttpClient? client}) {
+  _i3.SmithyOperation<void> hostWithPathOperation({
+    _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
+  }) {
     return _i10.HostWithPathOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       const _i3.Unit(),
       client: client ?? _client,
@@ -133,11 +164,14 @@ class JsonProtocolClient {
   _i3.SmithyOperation<_i11.JsonEnumsInputOutput> jsonEnums(
     _i11.JsonEnumsInputOutput input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i12.JsonEnumsOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -148,11 +182,14 @@ class JsonProtocolClient {
   _i3.SmithyOperation<_i13.UnionInputOutput> jsonUnions(
     _i13.UnionInputOutput input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i14.JsonUnionsOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -162,11 +199,14 @@ class JsonProtocolClient {
   _i3.SmithyOperation<_i15.KitchenSink> kitchenSinkOperation(
     _i15.KitchenSink input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i16.KitchenSinkOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -176,11 +216,14 @@ class JsonProtocolClient {
   _i3.SmithyOperation<_i17.NullOperationInputOutput> nullOperation(
     _i17.NullOperationInputOutput input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i18.NullOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -191,11 +234,14 @@ class JsonProtocolClient {
       operationWithOptionalInputOutput(
     _i20.OperationWithOptionalInputOutputInput input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i21.OperationWithOptionalInputOutputOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -207,11 +253,14 @@ class JsonProtocolClient {
       putAndGetInlineDocuments(
     _i22.PutAndGetInlineDocumentsInputOutput input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i23.PutAndGetInlineDocumentsOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,
@@ -222,11 +271,14 @@ class JsonProtocolClient {
       simpleScalarProperties(
     _i24.SimpleScalarPropertiesInputOutput input, {
     _i1.AWSHttpClient? client,
+    _i2.AWSCredentialsProvider? credentialsProvider,
   }) {
     return _i25.SimpleScalarPropertiesOperation(
       region: _region,
       baseUri: _baseUri,
-      credentialsProvider: _credentialsProvider,
+      credentialsProvider: credentialsProvider ?? _credentialsProvider,
+      requestInterceptors: _requestInterceptors,
+      responseInterceptors: _responseInterceptors,
     ).run(
       input,
       client: client ?? _client,

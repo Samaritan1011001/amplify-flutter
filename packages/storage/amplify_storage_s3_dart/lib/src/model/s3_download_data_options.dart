@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_storage_s3_dart/amplify_storage_s3_dart.dart';
@@ -24,10 +13,12 @@ class S3DownloadDataOptions extends StorageDownloadDataOptions {
     StorageAccessLevel accessLevel = StorageAccessLevel.guest,
     bool getProperties = false,
     S3DataBytesRange? bytesRange,
+    bool useAccelerateEndpoint = false,
   }) : this._(
           accessLevel: accessLevel,
           bytesRange: bytesRange,
           getProperties: getProperties,
+          useAccelerateEndpoint: useAccelerateEndpoint,
         );
 
   const S3DownloadDataOptions._({
@@ -35,6 +26,7 @@ class S3DownloadDataOptions extends StorageDownloadDataOptions {
     this.getProperties = false,
     this.bytesRange,
     this.targetIdentityId,
+    this.useAccelerateEndpoint = false,
   });
 
   /// {@macro storage.amplify_storage_s3.download_data_options}
@@ -46,11 +38,13 @@ class S3DownloadDataOptions extends StorageDownloadDataOptions {
     String targetIdentityId, {
     bool getProperties = false,
     S3DataBytesRange? bytesRange,
+    bool useAccelerateEndpoint = false,
   }) : this._(
           accessLevel: StorageAccessLevel.protected,
           targetIdentityId: targetIdentityId,
           getProperties: getProperties,
           bytesRange: bytesRange,
+          useAccelerateEndpoint: useAccelerateEndpoint,
         );
 
   /// The byte range to download from the object.
@@ -64,4 +58,10 @@ class S3DownloadDataOptions extends StorageDownloadDataOptions {
   /// Whether to retrieve properties for the downloaded object using the
   /// `getProperties` API.
   final bool getProperties;
+
+  /// {@template storage.amplify_storage_s3.transfer_acceleration}
+  /// Whether to use [S3 Transfer Acceleration](https://docs.aws.amazon.com/AmazonS3/latest/userguide/transfer-acceleration.html)
+  /// enabled endpoint for the operation.
+  /// {@endtemplate}
+  final bool useAccelerateEndpoint;
 }

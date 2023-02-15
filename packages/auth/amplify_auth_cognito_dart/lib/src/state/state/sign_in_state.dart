@@ -1,19 +1,9 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_auth_cognito_dart/src/model/cognito_user.dart';
 import 'package:amplify_auth_cognito_dart/src/sdk/cognito_identity_provider.dart';
+import 'package:amplify_auth_cognito_dart/src/state/state.dart';
 import 'package:amplify_core/amplify_core.dart';
 
 /// {@template amplify_auth_cognito_dart.sign_in_state_type}
@@ -42,7 +32,7 @@ enum SignInStateType {
 /// {@template amplify_auth_cognito_dart.sign_in_state}
 /// Discrete states of an auth flow state machine.
 /// {@endtemplate}
-abstract class SignInState extends StateMachineState<SignInStateType> {
+abstract class SignInState extends AuthState<SignInStateType> {
   /// {@macro amplify_auth_cognito_dart.sign_in_state}
   const SignInState();
 
@@ -135,7 +125,7 @@ class SignInChallenge extends SignInState {
 /// {@template amplify_auth_cognito_dart.sign_in_success}
 /// Sign in successfully completed.
 /// {@endtemplate}
-class SignInSuccess extends SignInState {
+class SignInSuccess extends SignInState with SuccessState {
   /// {@macro amplify_auth_cognito_dart.sign_in_success}
   const SignInSuccess(this.user);
 

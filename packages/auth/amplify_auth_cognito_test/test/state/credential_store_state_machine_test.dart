@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_auth_cognito_dart/amplify_auth_cognito_dart.dart';
 import 'package:amplify_auth_cognito_dart/src/credentials/cognito_keys.dart';
@@ -88,17 +77,17 @@ void main() {
         ]),
       );
 
-      final result = await sm.getCredentialsResult();
-      expect(result.data.awsCredentials, isNotNull);
-      expect(result.data.awsCredentials?.accessKeyId, accessKeyId);
-      expect(result.data.awsCredentials?.secretAccessKey, secretAccessKey);
-      expect(result.data.awsCredentials?.sessionToken, sessionToken);
-      expect(result.data.awsCredentials?.expiration, expiration);
-      expect(result.data.identityId, identityId);
-      expect(result.data.userPoolTokens, isNotNull);
-      expect(result.data.userPoolTokens?.accessToken, accessToken);
-      expect(result.data.userPoolTokens?.refreshToken, refreshToken);
-      expect(result.data.userPoolTokens?.idToken, idToken);
+      final result = await stateMachine.loadCredentials();
+      expect(result.awsCredentials, isNotNull);
+      expect(result.awsCredentials?.accessKeyId, accessKeyId);
+      expect(result.awsCredentials?.secretAccessKey, secretAccessKey);
+      expect(result.awsCredentials?.sessionToken, sessionToken);
+      expect(result.awsCredentials?.expiration, expiration);
+      expect(result.identityId, identityId);
+      expect(result.userPoolTokens, isNotNull);
+      expect(result.userPoolTokens?.accessToken, accessToken);
+      expect(result.userPoolTokens?.refreshToken, refreshToken);
+      expect(result.userPoolTokens?.idToken, idToken);
 
       await stateMachine.close();
     });
@@ -147,17 +136,17 @@ void main() {
           ]),
         );
 
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNotNull);
-        expect(result.data.awsCredentials?.accessKeyId, accessKeyId);
-        expect(result.data.awsCredentials?.secretAccessKey, secretAccessKey);
-        expect(result.data.awsCredentials?.sessionToken, sessionToken);
-        expect(result.data.awsCredentials?.expiration, expiration);
-        expect(result.data.identityId, identityId);
-        expect(result.data.userPoolTokens, isNotNull);
-        expect(result.data.userPoolTokens?.accessToken, accessToken);
-        expect(result.data.userPoolTokens?.refreshToken, refreshToken);
-        expect(result.data.userPoolTokens?.idToken, idToken);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNotNull);
+        expect(result.awsCredentials?.accessKeyId, accessKeyId);
+        expect(result.awsCredentials?.secretAccessKey, secretAccessKey);
+        expect(result.awsCredentials?.sessionToken, sessionToken);
+        expect(result.awsCredentials?.expiration, expiration);
+        expect(result.identityId, identityId);
+        expect(result.userPoolTokens, isNotNull);
+        expect(result.userPoolTokens?.accessToken, accessToken);
+        expect(result.userPoolTokens?.refreshToken, refreshToken);
+        expect(result.userPoolTokens?.idToken, idToken);
 
         await stateMachine.close();
       });
@@ -200,17 +189,17 @@ void main() {
           ]),
         );
 
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNotNull);
-        expect(result.data.awsCredentials?.accessKeyId, accessKeyId);
-        expect(result.data.awsCredentials?.secretAccessKey, secretAccessKey);
-        expect(result.data.awsCredentials?.sessionToken, sessionToken);
-        expect(result.data.awsCredentials?.expiration, expiration);
-        expect(result.data.identityId, identityId);
-        expect(result.data.userPoolTokens, isNotNull);
-        expect(result.data.userPoolTokens?.accessToken, accessToken);
-        expect(result.data.userPoolTokens?.refreshToken, refreshToken);
-        expect(result.data.userPoolTokens?.idToken, idToken);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNotNull);
+        expect(result.awsCredentials?.accessKeyId, accessKeyId);
+        expect(result.awsCredentials?.secretAccessKey, secretAccessKey);
+        expect(result.awsCredentials?.sessionToken, sessionToken);
+        expect(result.awsCredentials?.expiration, expiration);
+        expect(result.identityId, identityId);
+        expect(result.userPoolTokens, isNotNull);
+        expect(result.userPoolTokens?.accessToken, accessToken);
+        expect(result.userPoolTokens?.refreshToken, refreshToken);
+        expect(result.userPoolTokens?.idToken, idToken);
 
         await stateMachine.close();
       });
@@ -259,12 +248,12 @@ void main() {
           ]),
         );
 
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNotNull);
-        expect(result.data.awsCredentials?.accessKeyId, newAccessKeyId);
-        expect(result.data.awsCredentials?.secretAccessKey, newSecretAccessKey);
-        expect(result.data.awsCredentials?.sessionToken, isNull);
-        expect(result.data.awsCredentials?.expiration, isNull);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNotNull);
+        expect(result.awsCredentials?.accessKeyId, newAccessKeyId);
+        expect(result.awsCredentials?.secretAccessKey, newSecretAccessKey);
+        expect(result.awsCredentials?.sessionToken, isNull);
+        expect(result.awsCredentials?.expiration, isNull);
 
         await stateMachine.close();
       });
@@ -306,10 +295,10 @@ void main() {
           ]),
         );
 
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNull);
-        expect(result.data.identityId, isNull);
-        expect(result.data.userPoolTokens, isNull);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNull);
+        expect(result.identityId, isNull);
+        expect(result.userPoolTokens, isNull);
 
         await stateMachine.close();
       });
@@ -351,10 +340,10 @@ void main() {
           ]),
         );
 
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNull);
-        expect(result.data.identityId, isNull);
-        expect(result.data.userPoolTokens, isNotNull);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNull);
+        expect(result.identityId, isNull);
+        expect(result.userPoolTokens, isNotNull);
 
         await stateMachine.close();
       });
@@ -419,17 +408,17 @@ void main() {
         );
 
         // verify credentials have been migrated.
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNotNull);
-        expect(result.data.awsCredentials?.accessKeyId, accessKeyId);
-        expect(result.data.awsCredentials?.secretAccessKey, secretAccessKey);
-        expect(result.data.awsCredentials?.sessionToken, sessionToken);
-        expect(result.data.awsCredentials?.expiration, expiration);
-        expect(result.data.identityId, identityId);
-        expect(result.data.userPoolTokens, isNotNull);
-        expect(result.data.userPoolTokens?.accessToken, accessToken);
-        expect(result.data.userPoolTokens?.refreshToken, refreshToken);
-        expect(result.data.userPoolTokens?.idToken, idToken);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNotNull);
+        expect(result.awsCredentials?.accessKeyId, accessKeyId);
+        expect(result.awsCredentials?.secretAccessKey, secretAccessKey);
+        expect(result.awsCredentials?.sessionToken, sessionToken);
+        expect(result.awsCredentials?.expiration, expiration);
+        expect(result.identityId, identityId);
+        expect(result.userPoolTokens, isNotNull);
+        expect(result.userPoolTokens?.accessToken, accessToken);
+        expect(result.userPoolTokens?.refreshToken, refreshToken);
+        expect(result.userPoolTokens?.idToken, idToken);
 
         // verify credential store version has been updated.
         expect(await sm.getVersion(), CredentialStoreVersion.v1);
@@ -468,17 +457,17 @@ void main() {
         );
 
         // verify credentials have been migrated.
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNotNull);
-        expect(result.data.awsCredentials?.accessKeyId, accessKeyId);
-        expect(result.data.awsCredentials?.secretAccessKey, secretAccessKey);
-        expect(result.data.awsCredentials?.sessionToken, sessionToken);
-        expect(result.data.awsCredentials?.expiration, expiration);
-        expect(result.data.identityId, identityId);
-        expect(result.data.userPoolTokens, isNull);
-        expect(result.data.userPoolTokens?.accessToken, isNull);
-        expect(result.data.userPoolTokens?.refreshToken, isNull);
-        expect(result.data.userPoolTokens?.idToken, isNull);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNotNull);
+        expect(result.awsCredentials?.accessKeyId, accessKeyId);
+        expect(result.awsCredentials?.secretAccessKey, secretAccessKey);
+        expect(result.awsCredentials?.sessionToken, sessionToken);
+        expect(result.awsCredentials?.expiration, expiration);
+        expect(result.identityId, identityId);
+        expect(result.userPoolTokens, isNull);
+        expect(result.userPoolTokens?.accessToken, isNull);
+        expect(result.userPoolTokens?.refreshToken, isNull);
+        expect(result.userPoolTokens?.idToken, isNull);
 
         // verify credential store version has been updated.
         expect(await sm.getVersion(), CredentialStoreVersion.v1);
@@ -517,17 +506,17 @@ void main() {
         );
 
         // verify legacy credentials are not migrated.
-        final result = await sm.getCredentialsResult();
-        expect(result.data.awsCredentials, isNull);
-        expect(result.data.awsCredentials?.accessKeyId, isNull);
-        expect(result.data.awsCredentials?.secretAccessKey, isNull);
-        expect(result.data.awsCredentials?.sessionToken, isNull);
-        expect(result.data.awsCredentials?.expiration, isNull);
-        expect(result.data.identityId, isNull);
-        expect(result.data.userPoolTokens, isNull);
-        expect(result.data.userPoolTokens?.accessToken, isNull);
-        expect(result.data.userPoolTokens?.refreshToken, isNull);
-        expect(result.data.userPoolTokens?.idToken, isNull);
+        final result = await stateMachine.loadCredentials();
+        expect(result.awsCredentials, isNull);
+        expect(result.awsCredentials?.accessKeyId, isNull);
+        expect(result.awsCredentials?.secretAccessKey, isNull);
+        expect(result.awsCredentials?.sessionToken, isNull);
+        expect(result.awsCredentials?.expiration, isNull);
+        expect(result.identityId, isNull);
+        expect(result.userPoolTokens, isNull);
+        expect(result.userPoolTokens?.accessToken, isNull);
+        expect(result.userPoolTokens?.refreshToken, isNull);
+        expect(result.userPoolTokens?.idToken, isNull);
 
         await stateMachine.close();
       });

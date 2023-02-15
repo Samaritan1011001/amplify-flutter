@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -21,6 +10,7 @@ import 'package:amplify_auth_cognito_dart/src/flows/hosted_ui/hosted_ui_config.d
 import 'package:amplify_auth_cognito_dart/src/flows/hosted_ui/hosted_ui_platform_stub.dart'
     if (dart.library.html) 'package:amplify_auth_cognito_dart/src/flows/hosted_ui/hosted_ui_platform_html.dart'
     if (dart.library.io) 'package:amplify_auth_cognito_dart/src/flows/hosted_ui/hosted_ui_platform_io.dart';
+import 'package:amplify_auth_cognito_dart/src/state/state.dart';
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_secure_storage_dart/amplify_secure_storage_dart.dart';
 import 'package:http/http.dart' as http;
@@ -63,7 +53,7 @@ abstract class HostedUiPlatform implements Closeable {
 
   /// The state machine dispatcher.
   @protected
-  Dispatcher get dispatcher => dependencyManager.expect();
+  Dispatcher<AuthEvent, AuthState> get dispatcher => dependencyManager.expect();
 
   /// The dependency manager, used to retrieve injected dependencies.
   @protected
@@ -269,7 +259,7 @@ abstract class HostedUiPlatform implements Closeable {
         codeVerifier: codeVerifier,
         httpClient: httpClient,
       );
-      return dispatcher.dispatch(HostedUiEvent.exchange(parameters));
+      return dispatcher.dispatch(HostedUiEvent.exchange(parameters)).accepted;
     }
 
     // Clear all state from the previous session.
@@ -295,6 +285,7 @@ abstract class HostedUiPlatform implements Closeable {
   /// Sign out the current user.
   Future<void> signOut({
     required CognitoSignOutWithWebUIOptions options,
+    required bool isPreferPrivateSession,
   });
 
   @override

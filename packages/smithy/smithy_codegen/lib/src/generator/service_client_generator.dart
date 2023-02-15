@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:collection';
 
@@ -61,7 +50,7 @@ class ServiceClientGenerator extends LibraryGenerator<ServiceShape> {
           ])
           ..constructors.add(_clientConstructor)
           ..methods.addAll(_operationMethods)
-          ..fields.addAll(protocolFields);
+          ..fields.addAll(_clientFields);
       });
 
   Constructor get _clientConstructor => Constructor(
@@ -74,31 +63,32 @@ class ServiceClientGenerator extends LibraryGenerator<ServiceShape> {
           ..initializers.addAll(constructorInitializers),
       );
 
-  Iterable<Field> get protocolFields => LinkedHashSet<Field>(
+  Iterable<Field> get _clientFields => LinkedHashSet<Field>(
         equals: (a, b) => a.name == b.name,
         hashCode: (key) => key.name.hashCode,
       )..addAll(
           _operations
               .expand((op) => op.operationParameters(context))
-              .where((p) => p.location.inConstructor)
+              .where((p) => p.location.inClientConstructor)
               .map((parameter) => Field(
                     (f) => f
                       ..modifier = FieldModifier.final$
                       ..type = parameter.type
-                      ..name = '_${parameter.name}',
+                      ..name = private(parameter.name),
                   )),
         );
 
   Iterable<Parameter> get constructorParameters =>
-      operationParameters.where((p) => p.location.inConstructor).map((param) {
-        return Parameter(
-          (p) => p
-            ..type = param.type
-            ..required = param.required
-            ..name = param.name
-            ..named = true,
-        );
-      });
+      operationParameters.where((p) => p.location.inClientConstructor).map(
+            (param) => Parameter(
+              (p) => p
+                ..type = param.type
+                ..required = param.required && param.defaultTo == null
+                ..defaultTo = param.defaultTo
+                ..name = param.name
+                ..named = true,
+            ),
+          );
 
   Iterable<ConfigParameter> get operationParameters =>
       LinkedHashSet<ConfigParameter>(
@@ -109,8 +99,10 @@ class ServiceClientGenerator extends LibraryGenerator<ServiceShape> {
         );
 
   Iterable<Code> get constructorInitializers => constructorParameters.map(
-        (param) => refer('_${param.name}').assign(refer(param.name)).code,
+        (param) => refer(private(param.name)).assign(refer(param.name)).code,
       );
+
+  String private(String s) => s.startsWith('_') ? s : '_$s';
 
   /// Generate a callable method for each operation.
   Iterable<Method> get _operationMethods sync* {
@@ -127,7 +119,6 @@ class ServiceClientGenerator extends LibraryGenerator<ServiceShape> {
       }
       final paginatedTraits = operation.paginatedTraits(context);
       final isPaginated = paginatedTraits != null;
-      String public(String s) => s.startsWith('_') ? s.substring(1) : s;
       yield Method(
         (m) => m
           ..docs.addAll([
@@ -152,21 +143,28 @@ class ServiceClientGenerator extends LibraryGenerator<ServiceShape> {
                 ..name = 'input')
           ])
           ..optionalParameters.addAll(
-              operationParameters.where((p) => p.location.inRun).map((param) {
-            return Parameter(
-              (p) => p
-                ..required = false
-                ..toThis = false
-                ..type = param.type.boxed
-                ..name = param.name
-                ..named = true,
-            );
-          }))
+            operationParameters.where((p) => p.location.inClientMethod).map(
+                  (param) => Parameter(
+                    (p) => p
+                      ..required = false
+                      ..toThis = false
+                      ..type = param.type.boxed
+                      ..name = param.name
+                      ..named = true,
+                  ),
+                ),
+          )
           ..body = context
               .symbolFor(operation.shapeId)
               .newInstance([], {
-                for (final field in operation.protocolFields(context))
-                  public(field.name): refer(field.name),
+                for (final param in operationParameters
+                    .where((p) => p.location.inConstructor))
+                  param.name: param.location.inClientMethod &&
+                          param.location.inClientConstructor
+                      ? refer(param.name).ifNullThen(refer(private(param.name)))
+                      : param.location.inClientConstructor
+                          ? refer(private(param.name))
+                          : refer(param.name)
               })
               .property(isPaginated ? 'runPaginated' : 'run')
               .call([
@@ -175,10 +173,10 @@ class ServiceClientGenerator extends LibraryGenerator<ServiceShape> {
                 else
                   refer('input'),
               ], {
-                for (final param
-                    in operationParameters.where((p) => p.location.inRun))
-                  param.name: param.location.inConstructor
-                      ? refer(param.name).ifNullThen(refer('_${param.name}'))
+                for (final param in operationParameters.where(
+                    (p) => p.location.inClientMethod && p.location.inRun))
+                  param.name: param.location.inClientConstructor
+                      ? refer(param.name).ifNullThen(refer(private(param.name)))
                       : refer(param.name)
               })
               .returned

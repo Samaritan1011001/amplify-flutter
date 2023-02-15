@@ -1,17 +1,5 @@
-/*
-* Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License").
-* You may not use this file except in compliance with the License.
-* A copy of the License is located at
-*
-*  http://aws.amazon.com/apache2.0
-*
-* or in the "license" file accompanying this file. This file is distributed
-* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-* express or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 // NOTE: This file is generated and may not follow lint rules defined in your app
 // Generated files can be excluded from analysis in analysis_options.yaml
@@ -246,14 +234,13 @@ class Post extends Model {
   static final QueryField CREATED = QueryField(fieldName: 'created');
   static final QueryField LIKECOUNT = QueryField(fieldName: 'likeCount');
   static final QueryField BLOG = QueryField(
-      fieldName: 'blog',
-      fieldType: ModelFieldType(ModelFieldTypeEnum.model,
-          ofModelName: (Blog).toString()));
+      fieldName: "blog",
+      fieldType: ModelFieldType(ModelFieldTypeEnum.model, ofModelName: 'Blog'));
   static final QueryField COMMENTS = QueryField(
-      fieldName: 'comments',
-      fieldType: ModelFieldType(ModelFieldTypeEnum.model,
-          ofModelName: (Comment).toString()));
-  static ModelSchema schema =
+      fieldName: "comments",
+      fieldType:
+          ModelFieldType(ModelFieldTypeEnum.model, ofModelName: 'Comment'));
+  static var schema =
       Model.defineSchema(define: (ModelSchemaDefinition modelSchemaDefinition) {
     modelSchemaDefinition.name = 'Post';
     modelSchemaDefinition.pluralName = 'Posts';
@@ -287,17 +274,13 @@ class Post extends Model {
     modelSchemaDefinition.addField(ModelFieldDefinition.belongsTo(
         key: Post.BLOG,
         isRequired: false,
-        // TODO(Jordan-Nelson): Remove `targetName` when API category has been
-        // updated to support CPK changes. This was added manually.
-        // ignore: deprecated_member_use
-        targetName: 'blogID',
         targetNames: ['blogID'],
-        ofModelName: (Blog).toString()));
+        ofModelName: 'Blog'));
 
     modelSchemaDefinition.addField(ModelFieldDefinition.hasMany(
         key: Post.COMMENTS,
         isRequired: false,
-        ofModelName: (Comment).toString(),
+        ofModelName: 'Comment',
         associatedKey: Comment.POST));
 
     modelSchemaDefinition.addField(ModelFieldDefinition.nonQueryField(
@@ -320,6 +303,11 @@ class _PostModelType extends ModelType<Post> {
   @override
   Post fromJson(Map<String, dynamic> jsonData) {
     return Post.fromJson(jsonData);
+  }
+
+  @override
+  String modelName() {
+    return 'Post';
   }
 }
 

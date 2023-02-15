@@ -1,18 +1,8 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:amplify_auth_cognito_dart/src/sdk/cognito_identity_provider.dart';
+import 'package:amplify_auth_cognito_dart/src/state/state.dart';
 import 'package:amplify_core/amplify_core.dart';
 
 /// Discrete state types of the sign up flow.
@@ -37,7 +27,7 @@ enum SignUpStateType {
 }
 
 /// Discrete states of the sign up flow.
-abstract class SignUpState extends StateMachineState<SignUpStateType> {
+abstract class SignUpState extends AuthState<SignUpStateType> {
   const SignUpState._();
 
   /// {@macro amplify_auth_cognito.sign_up_not_started}
@@ -47,15 +37,18 @@ abstract class SignUpState extends StateMachineState<SignUpStateType> {
   const factory SignUpState.initiating() = SignUpInitiating;
 
   /// {@macro amplify_auth_cognito.sign_up_needs_confirmation}
-  const factory SignUpState.needsConfirmation([
+  const factory SignUpState.needsConfirmation({
+    required String userId,
     CodeDeliveryDetailsType? codeDeliveryDetails,
-  ]) = SignUpNeedsConfirmation;
+  }) = SignUpNeedsConfirmation;
 
   /// {@macro amplify_auth_cognito.sign_up_confirming}
   const factory SignUpState.confirming() = SignUpConfirming;
 
   /// {@macro amplify_auth_cognito.sign_up_success}
-  const factory SignUpState.success() = SignUpSuccess;
+  const factory SignUpState.success({
+    String? userId,
+  }) = SignUpSuccess;
 
   /// {@macro amplify_auth_cognito.sign_up_failure}
   const factory SignUpState.failure(Exception exception) = SignUpFailure;
@@ -97,7 +90,13 @@ class SignUpInitiating extends SignUpState {
 /// {@endtemplate}
 class SignUpNeedsConfirmation extends SignUpState {
   /// {@macro amplify_auth_cognito.sign_up_needs_confirmation}
-  const SignUpNeedsConfirmation([this.codeDeliveryDetails]) : super._();
+  const SignUpNeedsConfirmation({
+    required this.userId,
+    this.codeDeliveryDetails,
+  }) : super._();
+
+  /// The user ID of the unconfirmed user.
+  final String userId;
 
   /// Where and how the confirmation code was sent, if applicable.
   final CodeDeliveryDetailsType? codeDeliveryDetails;
@@ -106,7 +105,7 @@ class SignUpNeedsConfirmation extends SignUpState {
   SignUpStateType get type => SignUpStateType.needsConfirmation;
 
   @override
-  List<Object?> get props => [type, codeDeliveryDetails];
+  List<Object?> get props => [type, codeDeliveryDetails, userId];
 }
 
 /// {@template amplify_auth_cognito.sign_up_confirming}
@@ -126,15 +125,20 @@ class SignUpConfirming extends SignUpState {
 /// {@template amplify_auth_cognito.sign_up_success}
 /// The user successfully signed up.
 /// {@endtemplate}
-class SignUpSuccess extends SignUpState {
+class SignUpSuccess extends SignUpState with SuccessState {
   /// {@macro amplify_auth_cognito.sign_up_success}
-  const SignUpSuccess() : super._();
+  const SignUpSuccess({
+    this.userId,
+  }) : super._();
+
+  /// The ID of the user.
+  final String? userId;
 
   @override
   SignUpStateType get type => SignUpStateType.success;
 
   @override
-  List<Object?> get props => [type];
+  List<Object?> get props => [type, userId];
 }
 
 /// {@template amplify_auth_cognito.sign_up_failure}

@@ -1,17 +1,5 @@
-//
-// Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License").
-// You may not use this file except in compliance with the License.
-// A copy of the License is located at
-//
-//  http://aws.amazon.com/apache2.0
-//
-// or in the "license" file accompanying this file. This file is distributed
-// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-// express or implied. See the License for the specific language governing
-// permissions and limitations under the License.
-//
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 @TestOn('vm')
 
@@ -64,9 +52,6 @@ void main() {
 const expected = <String, CognitoAuthConfig>{
   'auth_with_all_attributes': CognitoAuthConfig(
     authenticationFlowType: AuthenticationFlowType.userSrpAuth,
-    loginMechanisms: [
-      CognitoUserAttributeKey.preferredUsername,
-    ],
     signupAttributes: [
       CognitoUserAttributeKey.address,
       CognitoUserAttributeKey.birthdate,
@@ -101,9 +86,6 @@ const expected = <String, CognitoAuthConfig>{
   ),
   'auth_with_email': CognitoAuthConfig(
     authenticationFlowType: AuthenticationFlowType.userSrpAuth,
-    loginMechanisms: [
-      CognitoUserAttributeKey.email,
-    ],
     signupAttributes: [
       CognitoUserAttributeKey.email,
     ],
@@ -130,10 +112,6 @@ const expected = <String, CognitoAuthConfig>{
   ),
   'auth_with_multi_alias': CognitoAuthConfig(
     authenticationFlowType: AuthenticationFlowType.userSrpAuth,
-    loginMechanism: [
-      CognitoUserAttributeKey.email,
-      CognitoUserAttributeKey.phoneNumber,
-    ],
     signupAttributes: [
       CognitoUserAttributeKey.email,
       CognitoUserAttributeKey.phoneNumber,
@@ -153,9 +131,6 @@ const expected = <String, CognitoAuthConfig>{
   ),
   'auth_with_username_no_attributes': CognitoAuthConfig(
     authenticationFlowType: AuthenticationFlowType.userSrpAuth,
-    loginMechanisms: [
-      CognitoUserAttributeKey.preferredUsername,
-    ],
     signupAttributes: [
       CognitoUserAttributeKey.email,
     ],

@@ -1,21 +1,12 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_auth_cognito/src/native_auth_plugin.g.dart';
+// ignore: implementation_imports
 import 'package:amplify_auth_cognito_dart/src/flows/hosted_ui/hosted_ui_platform_io.dart'
     as io;
 import 'package:amplify_core/amplify_core.dart';
@@ -37,11 +28,11 @@ class HostedUiPlatformImpl extends io.HostedUiPlatformImpl {
   Never _noSuitableRedirect({required bool signIn}) {
     final inOut = signIn ? 'in' : 'out';
     throw InvalidUserPoolConfigurationException(
-      message: 'No sign $inOut redirect URLs registered for a custom scheme. '
-          'Add one or more sign $inOut redirect URLs that '
-          'use a custom scheme like "myapp", for example "myapp://auth". See '
-          'the docs for more info: '
-          'https://docs.amplify.aws/lib/auth/signin_web_ui/q/platform/flutter/',
+      'No sign $inOut redirect URLs registered for a custom scheme. '
+      'Add one or more sign $inOut redirect URLs that '
+      'use a custom scheme like "myapp", for example "myapp://auth". See '
+      'the docs for more info: '
+      'https://docs.amplify.aws/lib/auth/signin_web_ui/q/platform/flutter/',
     );
   }
 
@@ -118,15 +109,19 @@ class HostedUiPlatformImpl extends io.HostedUiPlatformImpl {
   @override
   Future<void> signOut({
     required CognitoSignOutWithWebUIOptions options,
+    required bool isPreferPrivateSession,
   }) async {
     if (!_isMobile) {
-      return super.signOut(options: options);
+      return super.signOut(
+        options: options,
+        isPreferPrivateSession: isPreferPrivateSession,
+      );
     }
     final signOutUri = getSignOutUri();
     await _nativeAuthBridge.signOutWithUrl(
       signOutUri.toString(),
       signOutRedirectUri.scheme,
-      options.isPreferPrivateSession,
+      isPreferPrivateSession,
       options.browserPackageName,
     );
   }

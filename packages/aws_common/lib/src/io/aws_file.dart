@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'package:async/async.dart';
 import 'package:aws_common/aws_common.dart';
@@ -101,6 +90,7 @@ abstract class AWSFile {
   factory AWSFile.fromPath(
     String path, {
     String? name,
+    String? contentType,
   }) = AWSFilePlatform.fromPath;
 
   /// {@template amplify_core.io.aws_file.from_data}
@@ -118,8 +108,8 @@ abstract class AWSFile {
     this.path,
     this.bytes,
     this.name,
-    this.contentType,
-  });
+    String? contentType,
+  }) : _contentType = contentType;
 
   /// Stream of the file content.
   Stream<List<int>> get stream;
@@ -133,8 +123,7 @@ abstract class AWSFile {
   /// The path of the file if provided.
   final String? path;
 
-  /// The content type of the file if provided.
-  final String? contentType;
+  final String? _contentType;
 
   /// {@template amplify_core.io.aws_file.chunked_reader}
   /// Returns a [ChunkedStreamReader] over the stream of bytes of the file.
@@ -143,4 +132,7 @@ abstract class AWSFile {
 
   /// Size of the file.
   Future<int> get size;
+
+  /// The content type of the file if provided.
+  Future<String?> get contentType async => _contentType;
 }

@@ -1,16 +1,5 @@
-// Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
 
@@ -59,14 +48,10 @@ class AuthPluginCredentialsProviderImpl extends AuthPluginCredentialsProvider {
   /// {@macro amplify_auth_cognito.credentials.auth_plugin_credentials_provider_impl}
   const AuthPluginCredentialsProviderImpl(super.dependencyManager);
 
-  Dispatcher get _dispatcher => dependencyManager.expect();
+  CognitoAuthStateMachine get _manager => dependencyManager.expect();
 
   @override
   Future<AWSCredentials> retrieve() async {
-    final fetchAuthSessionMachine = dependencyManager.getOrCreate(
-      FetchAuthSessionStateMachine.type,
-    );
-
     // Whether this call originated from inside the fetch state machine.
     final inFetch = (Zone.current[zInFetch] as bool?) ?? false;
 
@@ -83,16 +68,9 @@ class AuthPluginCredentialsProviderImpl extends AuthPluginCredentialsProvider {
     // or refresh existing ones if needed, but do not initiate an
     // unauthenticated session since that should be handled via an explicit call
     // to `fetchAuthSession`.
-    await _dispatcher.dispatch(
-      const FetchAuthSessionEvent.fetch(
-        CognitoSessionOptions(getAWSCredentials: false),
-      ),
+    final session = await _manager.loadSession(
+      const FetchAuthSessionEvent.fetch(),
     );
-    final fetchState = await fetchAuthSessionMachine.getLatestResult();
-    final fetchedCredentials = fetchState?.session.credentials;
-    if (fetchedCredentials == null) {
-      throw const InvalidStateException('Could not retrieve AWS credentials');
-    }
-    return fetchedCredentials;
+    return session.credentialsResult.value;
   }
 }
